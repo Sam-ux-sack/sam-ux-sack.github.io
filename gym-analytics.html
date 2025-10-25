@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAMS GYM Analytics Dashboard v4</title>
+    <!-- v5.6: Titel -->
+    <title>SAMS GYM Analytics Dashboard v5.6</title>
     
     <meta name="theme-color" content="#DC2626">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -86,6 +87,7 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease-out;
         }
         .modal.active {
             display: flex;
@@ -97,8 +99,29 @@
             padding: 2rem;
             border-radius: 1rem;
             max-width: 800px;
-            max-height: 80vh;
+            max-height: 90vh;
             overflow-y: auto;
+            animation: scaleIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .member-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .member-list-item:last-child {
+            border-bottom: none;
         }
     </style>
 </head>
@@ -107,24 +130,28 @@
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
         <!-- Header -->
         <header class="mb-8">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
                 <div>
                     <h1 class="text-3xl font-bold" style="color: #DC2626;">
-                        🏋️ SAMS GYM Analytics v4
+                        <!-- v5.6: Titel -->
+                        🏋️ SAMS GYM Analytics v5.6
                     </h1>
                     <p class="text-sm text-gray-600 mt-1">
                         Analyse-Zeitraum: <span id="period-display" class="font-medium">-</span>
                     </p>
+                    <p class="text-sm text-gray-600 mt-1">
+                        Letztes Ereignis: <span id="last-event-display" class="font-medium">-</span>
+                    </p>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-2 mt-4 md:mt-0">
                     <button id="add-data-btn" class="hidden bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg shadow transition">
                         ➕ Neue Daten hinzufügen
                     </button>
                     <button id="export-btn" class="hidden bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg shadow transition">
-                        💾 Export
+                        💾 JSON Export
                     </button>
-                    <button id="save-github-btn" class="hidden text-white px-4 py-2 rounded-lg shadow transition" style="background: #DC2626;">
-                        ☁️ Auf GitHub speichern
+                    <button id="sync-github-btn" class="text-white px-4 py-2 rounded-lg shadow transition" style="background: #DC2626;">
+                        ☁️ GitHub Sync
                     </button>
                 </div>
             </div>
@@ -191,7 +218,7 @@
             
             <div class="flex gap-4 justify-center">
                 <button id="load-existing-btn" class="text-white px-8 py-4 rounded-lg shadow-lg transition transform hover:scale-105 font-bold" style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);">
-                    📂 Bestehende Daten laden
+                    📂 Gespeicherte Daten laden
                 </button>
                 <button id="start-new-btn" class="bg-gray-800 hover:bg-gray-900 text-white px-8 py-4 rounded-lg shadow-lg transition transform hover:scale-105 font-bold">
                     🆕 Neue Analyse starten
@@ -253,7 +280,7 @@
 
             <div id="loading" class="hidden mt-6 text-center">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: #DC2626;"></div>
-                <p class="mt-2 text-gray-600">Daten werden analysiert und in Monate aufgeteilt...</p>
+                <p id="loading-text" class="mt-2 text-gray-600">Daten werden analysiert und in Monate aufgeteilt...</p>
             </div>
         </div>
 
@@ -269,7 +296,7 @@
                             <p class="text-3xl font-bold text-gray-900" id="stat-total-checkins">0</p>
                             <p class="text-xs mt-1" style="color: #DC2626;" id="stat-checkins-trend">-</p>
                         </div>
-                        <div class="text-4xl">📊</div>
+                        <div class="text-3xl text-red-600 bg-red-100 p-3 rounded-full">📊</div>
                     </div>
                 </div>
 
@@ -280,7 +307,7 @@
                             <p class="text-3xl font-bold text-gray-900" id="stat-avg-daily">0</p>
                             <p class="text-xs text-gray-500 mt-1">Ø pro Tag</p>
                         </div>
-                        <div class="text-4xl">📅</div>
+                        <div class="text-3xl text-blue-600 bg-blue-100 p-3 rounded-full">📅</div>
                     </div>
                 </div>
 
@@ -291,7 +318,7 @@
                             <p class="text-xl font-bold text-gray-900" id="stat-top-studio">-</p>
                             <p class="text-xs text-gray-500 mt-1" id="stat-top-studio-percent">-</p>
                         </div>
-                        <div class="text-4xl">🏆</div>
+                        <div class="text-3xl text-yellow-600 bg-yellow-100 p-3 rounded-full">🏆</div>
                     </div>
                 </div>
             </div>
@@ -311,6 +338,12 @@
                         </button>
                         <button class="tab-button px-6 py-4 font-semibold whitespace-nowrap" data-tab="trends">
                             📈 Trends
+                        </button>
+                        <button class="tab-button px-6 py-4 font-semibold whitespace-nowrap" data-tab="members">
+                            👥 Mitglieder
+                        </button>
+                        <button class="tab-button px-6 py-4 font-semibold whitespace-nowrap" data-tab="compare">
+                            📊 Vergleich
                         </button>
                         <button class="tab-button px-6 py-4 font-semibold whitespace-nowrap" data-tab="insights">
                             💡 Insights
@@ -385,6 +418,7 @@
                                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Check-ins</th>
                                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Männer</th>
                                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Frauen</th>
+                                            <!-- v5.6: Unbekannt entfernt -->
                                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Ø Alter</th>
                                         </tr>
                                     </thead>
@@ -425,7 +459,7 @@
                         </div>
                     </div>
 
-                    <!-- Trends Tab (NEUE VERSION) -->
+                    <!-- Trends Tab -->
                     <div id="tab-trends" class="tab-content">
                         <h3 class="text-xl font-bold mb-4">Monatliche Trend-Analyse</h3>
                         
@@ -433,6 +467,9 @@
                             <p class="text-sm text-blue-900">
                                 📊 <strong id="trends-period-count">0</strong> Monate analysiert | 
                                 Zeitraum: <strong id="trends-date-range">-</strong>
+                            </p>
+                            <p class="text-sm text-blue-900 mt-2 font-medium" id="trends-total-percent">
+                                Gesamttrend (letzte 3 Mon.): -
                             </p>
                         </div>
 
@@ -476,9 +513,155 @@
                         </div>
 
                         <!-- Trend Alerts -->
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h4 class="font-semibold mb-3">⚠️ Erkannte Trends & Rückgänge</h4>
-                            <div id="trend-alerts-container" class="space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Positive Trends -->
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <h4 class="font-semibold mb-3 text-green-800">📈 Positive Trends (Wachstum)</h4>
+                                <div id="trend-alerts-positive" class="space-y-3">
+                                    <p class="text-gray-500 text-center py-4">Kein signifikantes Wachstum erkannt.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Negative Trends -->
+                            <div class="bg-red-50 p-4 rounded-lg">
+                                <h4 class="font-semibold mb-3 text-red-800">📉 Negative Trends (Rückgang)</h4>
+                                <div id="trend-alerts-negative" class="space-y-3">
+                                    <p class="text-gray-500 text-center py-4">Keine signifikanten Rückgänge erkannt.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mitglieder-Tab -->
+                    <div id="tab-members" class="tab-content">
+                        <h3 class="text-xl font-bold mb-4">Top 20 Mitglieder</h3>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">Studio wählen:</label>
+                            <select id="member-studio-filter" class="px-4 py-2 border border-gray-300 rounded-lg">
+                                <option value="all">Alle Studios (Gesamt)</option>
+                            </select>
+                        </div>
+                        
+                        <p class="text-sm text-gray-600 mb-6">Zeigt die aktivsten Mitglieder im aktuell gefilterten Zeitraum und Studio.</p>
+
+                        <div class="grid grid-cols-1 gap-6">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold mb-3 text-gray-800">🏆 Top 20 Mitglieder</h4>
+                                <div id="top-members-list" class="space-y-2">
+                                    <!-- JS füllt diesen Bereich -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vergleichs-Tab -->
+                    <div id="tab-compare" class="tab-content">
+                        <h3 class="text-xl font-bold mb-4">Zeitraum-Vergleich</h3>
+                        <p class="text-sm text-gray-600 mb-6">Wähle zwei Zeiträume und optional ein Studio aus, um die Kennzahlen zu vergleichen.</p>
+
+                        <!-- v5.6: Studio-Filter hinzugefügt -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium mb-2">Studio wählen (optional):</label>
+                            <select id="compare-studio-filter" class="px-4 py-2 border border-gray-300 rounded-lg bg-white">
+                                <option value="all">Alle Studios (Gesamt)</option>
+                                <!-- Optionen werden per JS hinzugefügt -->
+                            </select>
+                        </div>
+
+                        <!-- Filter-Auswahl -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 p-4 bg-gray-50 rounded-lg">
+                            <!-- Zeitraum A -->
+                            <div>
+                                <h4 class="font-semibold text-lg mb-3" style="color: #DC2626;">Zeitraum A (Basis)</h4>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">Typ:</label>
+                                        <select id="period-type-A" class="compare-period-type w-full px-4 py-2 border border-gray-300 rounded-lg bg-white" data-period="A">
+                                            <option value="all">Gesamter Zeitraum</option>
+                                            <option value="year">Jahr</option>
+                                            <option value="quarter">Quartal</option>
+                                            <option value="month">Monat</option>
+                                        </select>
+                                    </div>
+                                    <div id="year-selector-A" class="hidden">
+                                        <label class="block text-sm font-medium mb-1">Jahr:</label>
+                                        <select id="year-select-A" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"></select>
+                                    </div>
+                                    <div id="quarter-selector-A" class="hidden">
+                                        <label class="block text-sm font-medium mb-1">Quartal:</label>
+                                        <select id="quarter-select-A" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white">
+                                            <option value="Q1">Q1 (Jan-Mar)</option>
+                                            <option value="Q2">Q2 (Apr-Jun)</option>
+                                            <option value="Q3">Q3 (Jul-Sep)</option>
+                                            <option value="Q4">Q4 (Okt-Dez)</option>
+                                        </select>
+                                    </div>
+                                    <div id="month-selector-A" class="hidden">
+                                        <label class="block text-sm font-medium mb-1">Monat:</label>
+                                        <select id="month-select-A" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white">
+                                            <option value="1">Januar</option><option value="2">Februar</option><option value="3">März</option><option value="4">April</option><option value="5">Mai</option><option value="6">Juni</option><option value="7">Juli</option><option value="8">August</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Dezember</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Zeitraum B -->
+                            <div>
+                                <h4 class="font-semibold text-lg mb-3 text-blue-600">Zeitraum B (Vergleich)</h4>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">Typ:</label>
+                                        <select id="period-type-B" class="compare-period-type w-full px-4 py-2 border border-gray-300 rounded-lg bg-white" data-period="B">
+                                            <option value="all">Gesamter Zeitraum</option>
+                                            <option value="year">Jahr</option>
+                                            <option value="quarter">Quartal</option>
+                                            <option value="month">Monat</option>
+                                        </select>
+                                    </div>
+                                    <div id="year-selector-B" class="hidden">
+                                        <label class="block text-sm font-medium mb-1">Jahr:</label>
+                                        <select id="year-select-B" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"></select>
+                                    </div>
+                                    <div id="quarter-selector-B" class="hidden">
+                                        <label class="block text-sm font-medium mb-1">Quartal:</label>
+                                        <select id="quarter-select-B" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white">
+                                            <option value="Q1">Q1 (Jan-Mar)</option>
+                                            <option value="Q2">Q2 (Apr-Jun)</option>
+                                            <option value="Q3">Q3 (Jul-Sep)</option>
+                                            <option value="Q4">Q4 (Okt-Dez)</option>
+                                        </select>
+                                    </div>
+                                    <div id="month-selector-B" class="hidden">
+                                        <label class="block text-sm font-medium mb-1">Monat:</label>
+                                        <select id="month-select-B" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white">
+                                            <option value="1">Januar</option><option value="2">Februar</option><option value="3">März</option><option value="4">April</option><option value="5">Mai</option><option value="6">Juni</option><option value="7">Juli</option><option value="8">August</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Dezember</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button id="run-compare-btn" class="w-full text-white font-bold py-4 px-6 rounded-lg shadow-lg transition transform hover:scale-105" style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);">
+                            📊 Vergleichen
+                        </button>
+
+                        <!-- Ergebnis-Sektion -->
+                        <div id="compare-results-section" class="hidden mt-8">
+                            <h3 class="text-xl font-bold mb-4">Vergleichs-Ergebnis</h3>
+                            <div class="overflow-x-auto bg-white rounded-lg shadow">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-800 text-white">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase">Metrik</th>
+                                            <th class="px-6 py-3 text-right text-xs font-semibold uppercase">Zeitraum A</th>
+                                            <th class="px-6 py-3 text-right text-xs font-semibold uppercase">Zeitraum B</th>
+                                            <th class="px-6 py-3 text-right text-xs font-semibold uppercase">Veränderung</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="compare-results-table" class="bg-white divide-y divide-gray-200">
+                                        <!-- Zeilen werden per JS eingefügt -->
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -499,19 +682,66 @@
         <div class="modal-content">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-xl font-bold" id="example-title">Beispiel</h3>
-                <button onclick="closeExample()" class="text-gray-600 hover:text-gray-800 text-2xl">×</button>
+                <button onclick="closeModal('example-modal')" class="text-gray-600 hover:text-gray-800 text-2xl">×</button>
             </div>
             <div id="example-content"></div>
         </div>
     </div>
 
+    <!-- GitHub Sync Modal -->
+    <div id="github-modal" class="modal">
+        <div class="modal-content max-w-lg">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold">☁️ GitHub Sync</h3>
+                <button onclick="closeModal('github-modal')" class="text-gray-600 hover:text-gray-800 text-2xl">×</button>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-2">Speichere oder lade deine Analysedaten als `analysis-data.json` in deinem GitHub-Repo.</p>
+            <p class="text-sm text-gray-600 mb-4">Dein Token wird nur im Browser gespeichert und nie an Dritte gesendet.</p>
+
+            <div class="mb-4">
+                <label for="github-status" class="block text-sm font-medium mb-1">Status:</label>
+                <input type="text" id="github-status" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+            </div>
+            
+            <div class="mb-4">
+                <label for="github-owner" class="block text-sm font-medium mb-1">Repo-Besitzer (z.B. "sam-ux-sack"):</label>
+                <input type="text" id="github-owner" class="w-full px-3 py-2 border border-gray-300 rounded-lg" value="sam-ux-sack">
+            </div>
+            <div class="mb-4">
+                <label for="github-repo" class="block text-sm font-medium mb-1">Repo-Name (z.B. "sams-gym-data"):</label>
+                <input type="text" id="github-repo" class="w-full px-3 py-2 border border-gray-300 rounded-lg" value="sams-gym-data">
+            </div>
+            <div class="mb-4">
+                <label for="github-token" class="block text-sm font-medium mb-1">GitHub Personal Access Token (classic):</label>
+                <input type="password" id="github-token" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="ghp_...">
+                <a href="https://github.com/settings/tokens/new?scopes=repo&description=SAMS-GYM-Analytics" target="_blank" class="text-xs text-blue-600 hover:underline">Neuen Token erstellen (mit "repo" Rechten)</a>
+            </div>
+
+            <div id="github-loading" class="hidden text-center my-4">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: #DC2626;"></div>
+                <p class="mt-2 text-gray-600" id="github-loading-text">Aktion wird ausgeführt...</p>
+            </div>
+            
+            <div id="github-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg my-4">
+            </div>
+
+            <div class="flex gap-4">
+                <button id="github-load-btn" class="flex-1 bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-lg shadow transition font-semibold">
+                    Laden
+                </button>
+                <button id="github-save-btn" class="flex-1 text-white px-6 py-3 rounded-lg shadow transition font-semibold" style="background: #DC2626;">
+                    Speichern
+                </button>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         // ==================== CONFIGURATION ====================
-        const GITHUB_CONFIG = {
-            owner: 'sam-ux-sack',
-            repo: 'sams-gym-data',
-            token: null
-        };
+        const AGE_GROUPS = ['<20', '20-40', '40-60', '60+'];
+        const AGE_GROUP_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
 
         const MAIN_DOORS = {
             'Susten Haupttüre': 'Susten GYM',
@@ -526,9 +756,73 @@
         let allCheckins = [];
         let filteredCheckins = [];
         let analysisResults = null;
-        let monthlyTrends = [];  // NEW: Array of monthly data points
+        let monthlyTrends = [];
         let charts = {};
-        let isLoadedFromGitHub = false;
+        
+        let githubConfig = {
+            owner: 'sam-ux-sack',
+            repo: 'sams-gym-data',
+            token: null,
+            filePath: 'analysis-data.json'
+        };
+        let githubDataSha = null;
+        let lastLoadedTimestamp = null;
+
+        // ==================== HELPER FUNCTIONS ====================
+        function extractGender(name) {
+            if (name.startsWith('Herr')) return 'Männlich';
+            if (name.startsWith('Frau')) return 'Weiblich';
+            return 'Unknown'; // Bleibt bestehen, falls Zoho-Daten unsauber sind
+        }
+
+        function getAgeGroup(age) {
+            if (age === null) return null;
+            if (age < 20) return '<20';
+            if (age < 40) return '20-40';
+            if (age < 60) return '40-60';
+            return '60+';
+        }
+
+        function calculateAge(birthdate) {
+            if (!birthdate) return null;
+            let birth;
+            if (birthdate.includes('.')) { // TT.MM.JJJJ
+                const parts = birthdate.split('.');
+                if (parts.length === 3) {
+                    birth = new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+            } else if (birthdate.includes('-')) { // JJJJ-MM-TT
+                birth = new Date(birthdate);
+            }
+            
+            if (!birth || isNaN(birth)) {
+                birth = new Date(birthdate);
+            }
+
+            if (!birth || isNaN(birth)) return null;
+            
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        function formatDate(date) {
+            if (!date) return '-';
+            return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+        
+        function formatDateTime(date) {
+            if (!date) return '-';
+            return date.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
 
         // ==================== EXAMPLE DATA ====================
         function showExample(type) {
@@ -547,35 +841,6 @@
                             <li><strong>Geburtsdatum</strong> - Format: TT.MM.JJJJ oder JJJJ-MM-TT</li>
                         </ul>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm border">
-                            <thead class="bg-gray-200">
-                                <tr>
-                                    <th class="border px-3 py-2">Kundennummer</th>
-                                    <th class="border px-3 py-2">Name</th>
-                                    <th class="border px-3 py-2">Geburtsdatum</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="border px-3 py-2">CUS-12345</td>
-                                    <td class="border px-3 py-2">Herr Max Müller</td>
-                                    <td class="border px-3 py-2">15.03.1990</td>
-                                </tr>
-                                <tr>
-                                    <td class="border px-3 py-2">CUS-12346</td>
-                                    <td class="border px-3 py-2">Frau Anna Schmidt</td>
-                                    <td class="border px-3 py-2">22.07.1985</td>
-                                </tr>
-                                <tr>
-                                    <td class="border px-3 py-2">CUS-12347</td>
-                                    <td class="border px-3 py-2">Herr Thomas Weber</td>
-                                    <td class="border px-3 py-2">10.11.1978</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <p class="text-xs text-gray-600 mt-4">💡 Export aus Zoho CRM als CSV (UTF-8)</p>
                 `;
             } else {
                 title.textContent = 'Beispiel: SALTO Ereignisse CSV';
@@ -597,59 +862,21 @@
                             <li><strong>Spalte 5:</strong> CUS-Nummer (z.B. "CUS-12345")</li>
                         </ul>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm border">
-                            <thead class="bg-gray-200">
-                                <tr>
-                                    <th class="border px-3 py-2">Zeitstempel</th>
-                                    <th class="border px-3 py-2">Event</th>
-                                    <th class="border px-3 py-2">Türname</th>
-                                    <th class="border px-3 py-2">-</th>
-                                    <th class="border px-3 py-2">CUS-Nr</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="border px-3 py-2">25.10.2024 14:35:22</td>
-                                    <td class="border px-3 py-2">Access granted</td>
-                                    <td class="border px-3 py-2">Susten Haupttüre</td>
-                                    <td class="border px-3 py-2"></td>
-                                    <td class="border px-3 py-2">CUS-12345</td>
-                                </tr>
-                                <tr>
-                                    <td class="border px-3 py-2">25.10.2024 14:38:15</td>
-                                    <td class="border px-3 py-2">Access granted</td>
-                                    <td class="border px-3 py-2">Visp Süd - Eingang</td>
-                                    <td class="border px-3 py-2"></td>
-                                    <td class="border px-3 py-2">CUS-12346</td>
-                                </tr>
-                                <tr>
-                                    <td class="border px-3 py-2">25.10.2024 14:42:03</td>
-                                    <td class="border px-3 py-2">Access granted</td>
-                                    <td class="border px-3 py-2">Strongman rechts</td>
-                                    <td class="border px-3 py-2"></td>
-                                    <td class="border px-3 py-2">CUS-12347</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <p class="text-xs text-gray-600 mt-4">💡 Export aus SALTO Space als CSV</p>
                 `;
             }
 
             modal.classList.add('active');
         }
 
-        function closeExample() {
-            document.getElementById('example-modal').classList.remove('active');
-        }
-
         // ==================== INITIAL LOAD ====================
         function setupInitialLoad() {
-            document.getElementById('load-existing-btn').addEventListener('click', loadExistingData);
+            document.getElementById('load-existing-btn').addEventListener('click', () => {
+                document.getElementById('github-modal').classList.add('active');
+            });
             document.getElementById('start-new-btn').addEventListener('click', startNewAnalysis);
+            
             document.getElementById('cancel-upload-btn').addEventListener('click', () => {
-                if (isLoadedFromGitHub) {
+                if (allCheckins.length > 0) {
                     document.getElementById('upload-section').classList.add('hidden');
                     document.getElementById('results-section').classList.remove('hidden');
                 } else {
@@ -663,14 +890,34 @@
             });
         }
 
-        async function loadExistingData() {
-            alert('Funktion wird noch implementiert. Bitte starte eine neue Analyse.');
-        }
-
         function startNewAnalysis() {
+            allCheckins = [];
+            monthlyTrends = [];
+            filteredCheckins = [];
+            analysisResults = null;
+            githubDataSha = null;
+            lastLoadedTimestamp = null;
+            
+            updateDataStatus('Lokal (nicht gespeichert)');
+            document.getElementById('period-display').textContent = '-';
+            document.getElementById('last-event-display').textContent = '-';
+            document.getElementById('time-filter-section').classList.add('hidden');
+            document.getElementById('results-section').classList.add('hidden');
+            document.getElementById('add-data-btn').classList.add('hidden');
+            document.getElementById('export-btn').classList.add('hidden');
+            
+            contactsData = null;
+            eventsData = null;
+            document.getElementById('contacts-status').textContent = 'Keine Datei';
+            document.getElementById('events-status').textContent = 'Keine Datei';
+            document.getElementById('contacts-status').classList.remove('text-green-600');
+            document.getElementById('events-status').classList.remove('text-green-600');
+            document.getElementById('analyze-btn').classList.add('hidden');
+
             document.getElementById('initial-load-section').classList.add('hidden');
             document.getElementById('upload-section').classList.remove('hidden');
         }
+
 
         // ==================== FILE UPLOAD HANDLERS ====================
         function setupFileHandlers() {
@@ -726,6 +973,7 @@
 
             Papa.parse(file, {
                 header: true,
+                skipEmptyLines: true,
                 complete: (results) => {
                     if (type === 'contacts') {
                         contactsData = results.data;
@@ -746,6 +994,13 @@
         function analyzeData() {
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('analyze-btn').classList.add('hidden');
+            document.getElementById('loading-text').textContent = 'Analysiere Kontakte...';
+
+            let mergeDate = null;
+            if (lastLoadedTimestamp) {
+                mergeDate = new Date(lastLoadedTimestamp);
+                console.log('Merging new data since:', mergeDate);
+            }
 
             setTimeout(() => {
                 const contactsLookup = {};
@@ -761,7 +1016,9 @@
                     }
                 });
 
-                allCheckins = [];
+                document.getElementById('loading-text').textContent = 'Verarbeite SALTO-Ereignisse...';
+
+                let newCheckins = [];
                 eventsData.forEach(event => {
                     const cols = Object.values(event);
                     if (cols.length < 5) return;
@@ -772,125 +1029,190 @@
 
                     if (!MAIN_DOORS[doorName]) return;
                     if (!cusNumber || !cusNumber.startsWith('CUS-')) return;
+                    
+                    const contact = contactsLookup[cusNumber];
+                    if (!contact) return; // v5.5: Filtert Personal/unbekannte CUS-Nummern
 
-                    const studio = MAIN_DOORS[doorName];
-                    const contact = contactsLookup[cusNumber] || {};
-
-                    const date = new Date(timestamp);
+                    let date = null;
+                    if (timestamp.includes('.')) { // TT.MM.JJJJ HH:MM:SS
+                        const parts = timestamp.split(' ');
+                        const dateParts = parts[0].split('.');
+                        const timeParts = parts[1].split(':');
+                        if (dateParts.length === 3 && timeParts.length === 3) {
+                            date = new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1], timeParts[2]);
+                        }
+                    }
+                    
+                    if (!date || isNaN(date)) {
+                        date = new Date(timestamp);
+                    }
+                    
                     if (isNaN(date)) return;
 
-                    const dateKey = date.toISOString().split('T')[0];
-                    const hour = date.getHours();
-                    const day = date.getDay();
+                    if (mergeDate && date <= mergeDate) {
+                        return;
+                    }
 
-                    allCheckins.push({
-                        timestamp: date,
+                    const studio = MAIN_DOORS[doorName];
+                    const age = contact.age || null;
+
+                    newCheckins.push({
+                        timestamp: date.toISOString(),
                         studio,
                         cusNumber,
-                        gender: contact.gender || 'Unknown',
-                        age: contact.age || null,
-                        dateKey,
-                        hour,
-                        day
+                        gender: contact.gender || 'Unknown', // Keep 'Unknown' for bad Zoho data
+                        age: age,
+                        ageGroup: getAgeGroup(age),
+                        dateKey: date.toISOString().split('T')[0],
+                        hour: date.getHours(),
+                        day: date.getDay()
                     });
                 });
 
+                allCheckins.push(...newCheckins);
+                
+                allCheckins = allCheckins.map(c => ({
+                    ...c,
+                    timestamp: new Date(c.timestamp) 
+                }));
+
                 allCheckins.sort((a, b) => a.timestamp - b.timestamp);
+                
+                if (allCheckins.length > 0) {
+                    lastLoadedTimestamp = allCheckins[allCheckins.length - 1].timestamp.toISOString();
+                }
 
-                // NEW: Generate monthly trends
-                generateMonthlyTrends();
+                document.getElementById('loading-text').textContent = 'Erstelle monatliche Trends...';
 
-                filteredCheckins = [...allCheckins];
-                processAnalysis();
+                setTimeout(() => {
+                    generateMonthlyTrends();
 
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('results-section').classList.remove('hidden');
-                document.getElementById('time-filter-section').classList.remove('hidden');
-                document.getElementById('export-btn').classList.remove('hidden');
-                document.getElementById('save-github-btn').classList.remove('hidden');
-                document.getElementById('upload-section').classList.add('hidden');
-                document.getElementById('add-data-btn').classList.remove('hidden');
+                    filteredCheckins = [...allCheckins];
+                    processAnalysis();
 
-                setupTimeFilters();
-                setupTrendsFilters();
-                renderTrendCharts('all');
-                analyzeTrendDeclines();
-            }, 500);
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('results-section').classList.remove('hidden');
+                    document.getElementById('time-filter-section').classList.remove('hidden');
+                    document.getElementById('export-btn').classList.remove('hidden');
+                    document.getElementById('add-data-btn').classList.remove('hidden');
+                    document.getElementById('upload-section').classList.add('hidden');
+                    
+                    updateDataStatus('Lokal (nicht auf GitHub gespeichert)');
+
+                    setupTimeFilters();
+                    setupTrendsFilters();
+                    renderTrendCharts('all');
+                    analyzeTrendAlerts();
+                }, 50);
+
+            }, 50);
         }
 
         // ==================== MONTHLY TRENDS GENERATION ====================
         function generateMonthlyTrends() {
             const monthlyData = {};
 
+            if (allCheckins.length === 0) {
+                monthlyTrends = [];
+                return;
+            }
+            const firstDate = allCheckins[0].timestamp;
+            const lastDate = allCheckins[allCheckins.length - 1].timestamp;
+
+            let currentDate = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
+            
+            while (currentDate <= lastDate) {
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+                const studios = {};
+                Object.values(MAIN_DOORS).forEach(studioName => {
+                    const ageGroups = {};
+                    AGE_GROUPS.forEach(g => {
+                        ageGroups[g] = { male: 0, female: 0, other: 0 };
+                    });
+                    
+                    studios[studioName] = {
+                        total: 0,
+                        male: 0,
+                        female: 0,
+                        other: 0, // Still track internally for calculation robustness
+                        ageGroups: ageGroups
+                    };
+                });
+                
+                monthlyData[key] = {
+                    period: key,
+                    year: year,
+                    month: month + 1,
+                    studios: studios
+                };
+
+                currentDate.setMonth(currentDate.getMonth() + 1);
+            }
+
             allCheckins.forEach(c => {
                 const year = c.timestamp.getFullYear();
                 const month = c.timestamp.getMonth();
                 const key = `${year}-${String(month + 1).padStart(2, '0')}`;
 
-                if (!monthlyData[key]) {
-                    monthlyData[key] = {
-                        period: key,
-                        year: year,
-                        month: month + 1,
-                        checkins: []
-                    };
+                const monthStats = monthlyData[key];
+                if (!monthStats) return; 
+                
+                const studioStats = monthStats.studios[c.studio];
+                if (!studioStats) return;
+
+                studioStats.total++;
+                
+                if (c.gender === 'Männlich') {
+                    studioStats.male++;
+                    if (c.ageGroup) {
+                        studioStats.ageGroups[c.ageGroup].male++;
+                    }
+                } else if (c.gender === 'Weiblich') {
+                    studioStats.female++;
+                    if (c.ageGroup) {
+                        studioStats.ageGroups[c.ageGroup].female++;
+                    }
+                } else {
+                    studioStats.other++;
+                    if (c.ageGroup) {
+                        studioStats.ageGroups[c.ageGroup].other++;
+                    }
                 }
-                monthlyData[key].checkins.push(c);
             });
 
-            // Convert to array and calculate stats for each month
-            monthlyTrends = Object.keys(monthlyData).sort().map(key => {
-                const data = monthlyData[key];
-                const checkins = data.checkins;
+            const lastMonthKey = Object.keys(monthlyData).pop();
+            if (lastMonthKey) {
+                const lastMonthData = monthlyData[lastMonthKey];
+                const today = new Date();
+                const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+                const currentDay = today.getDate();
+                
+                if (lastMonthData.year === today.getFullYear() && lastMonthData.month === today.getMonth() + 1 && currentDay < daysInMonth) {
+                    const factor = daysInMonth / currentDay;
+                    lastMonthData.isProjected = true; 
+                    
+                    Object.values(lastMonthData.studios).forEach(studio => {
+                        studio.total = Math.round(studio.total * factor);
+                        studio.male = Math.round(studio.male * factor);
+                        studio.female = Math.round(studio.female * factor);
+                        studio.other = Math.round(studio.other * factor);
+                        
+                        AGE_GROUPS.forEach(g => {
+                            studio.ageGroups[g].male = Math.round(studio.ageGroups[g].male * factor);
+                            studio.ageGroups[g].female = Math.round(studio.ageGroups[g].female * factor);
+                            studio.ageGroups[g].other = Math.round(studio.ageGroups[g].other * factor);
+                        });
+                    });
+                }
+            }
 
-                // Calculate stats per studio
-                const studios = {};
-                Object.keys(MAIN_DOORS).forEach(door => {
-                    const studio = MAIN_DOORS[door];
-                    const studioCheckins = checkins.filter(c => c.studio === studio);
-
-                    // Total
-                    const total = studioCheckins.length;
-
-                    // Gender
-                    const male = studioCheckins.filter(c => c.gender === 'Männlich').length;
-                    const female = studioCheckins.filter(c => c.gender === 'Weiblich').length;
-
-                    // Age groups for males
-                    const maleAge = {
-                        '<20': studioCheckins.filter(c => c.gender === 'Männlich' && c.age !== null && c.age < 20).length,
-                        '20-30': studioCheckins.filter(c => c.gender === 'Männlich' && c.age !== null && c.age >= 20 && c.age < 30).length,
-                        '30-40': studioCheckins.filter(c => c.gender === 'Männlich' && c.age !== null && c.age >= 30 && c.age < 40).length,
-                        '40+': studioCheckins.filter(c => c.gender === 'Männlich' && c.age !== null && c.age >= 40).length
-                    };
-
-                    // Age groups for females
-                    const femaleAge = {
-                        '<20': studioCheckins.filter(c => c.gender === 'Weiblich' && c.age !== null && c.age < 20).length,
-                        '20-30': studioCheckins.filter(c => c.gender === 'Weiblich' && c.age !== null && c.age >= 20 && c.age < 30).length,
-                        '30-40': studioCheckins.filter(c => c.gender === 'Weiblich' && c.age !== null && c.age >= 30 && c.age < 40).length,
-                        '40+': studioCheckins.filter(c => c.gender === 'Weiblich' && c.age !== null && c.age >= 40).length
-                    };
-
-                    studios[studio] = {
-                        total,
-                        male,
-                        female,
-                        maleAge,
-                        femaleAge
-                    };
-                });
-
-                return {
-                    period: data.period,
-                    year: data.year,
-                    month: data.month,
-                    studios
-                };
-            });
-
-            console.log('Monthly trends generated:', monthlyTrends.length, 'months');
+            monthlyTrends = Object.values(monthlyData);
+            console.log('Monthly trends generated (Optimized):', monthlyTrends.length, 'months');
         }
+
 
         function processAnalysis() {
             const studioStats = {};
@@ -944,35 +1266,207 @@
             });
 
             applyBtn.addEventListener('click', applyTimeFilter);
+
+            setupCompareFilters(years);
         }
 
         function applyTimeFilter() {
             const periodType = document.getElementById('period-type').value;
-            
-            if (periodType === 'all') {
-                filteredCheckins = [...allCheckins];
-            } else {
-                const year = parseInt(document.getElementById('year-select').value);
-                
-                if (periodType === 'year') {
-                    filteredCheckins = allCheckins.filter(c => c.timestamp.getFullYear() === year);
-                } else if (periodType === 'quarter') {
-                    const quarter = document.getElementById('quarter-select').value;
-                    const qMap = { 'Q1': [0, 1, 2], 'Q2': [3, 4, 5], 'Q3': [6, 7, 8], 'Q4': [9, 10, 11] };
-                    const months = qMap[quarter];
-                    filteredCheckins = allCheckins.filter(c => 
-                        c.timestamp.getFullYear() === year && months.includes(c.timestamp.getMonth())
-                    );
-                } else if (periodType === 'month') {
-                    const month = parseInt(document.getElementById('month-select').value) - 1;
-                    filteredCheckins = allCheckins.filter(c => 
-                        c.timestamp.getFullYear() === year && c.timestamp.getMonth() === month
-                    );
-                }
-            }
+            const year = parseInt(document.getElementById('year-select').value);
+            const quarter = document.getElementById('quarter-select').value;
+            const month = parseInt(document.getElementById('month-select').value);
+
+            const settings = { periodType, year, quarter, month };
+            filteredCheckins = getFilteredCheckins(settings);
 
             processAnalysis();
         }
+
+        // v5.6: Studio Filter hinzugefügt
+        function getFilteredCheckins(settings, studioFilter = 'all') {
+            const { periodType, year, quarter, month } = settings;
+            let baseCheckins = [...allCheckins];
+
+            // Filter by Studio first if specified
+            if (studioFilter !== 'all') {
+                baseCheckins = baseCheckins.filter(c => c.studio === studioFilter);
+            }
+
+            // Then filter by time period
+            if (periodType === 'all') {
+                return baseCheckins;
+            }
+            if (periodType === 'year') {
+                return baseCheckins.filter(c => c.timestamp.getFullYear() === year);
+            }
+            if (periodType === 'quarter') {
+                const qMap = { 'Q1': [0, 1, 2], 'Q2': [3, 4, 5], 'Q3': [6, 7, 8], 'Q4': [9, 10, 11] };
+                const months = qMap[quarter];
+                return baseCheckins.filter(c => 
+                    c.timestamp.getFullYear() === year && months.includes(c.timestamp.getMonth())
+                );
+            }
+            if (periodType === 'month') {
+                const monthIdx = month - 1;
+                return baseCheckins.filter(c => 
+                    c.timestamp.getFullYear() === year && c.timestamp.getMonth() === monthIdx
+                );
+            }
+            return []; // Should not happen
+        }
+        
+        // v5.6: Studio Filter hinzugefügt
+        function setupCompareFilters(years) {
+            if (years.length === 0) return;
+            
+            const yearSelectA = document.getElementById('year-select-A');
+            const yearSelectB = document.getElementById('year-select-B');
+            const yearOptions = years.map(y => `<option value="${y}">${y}</option>`).join('');
+            yearSelectA.innerHTML = yearOptions;
+            yearSelectB.innerHTML = yearOptions;
+
+            // Populate compare studio filter
+            const compareStudioFilter = document.getElementById('compare-studio-filter');
+            const studioOptions = Object.values(MAIN_DOORS)
+                                      .map(studio => `<option value="${studio}">${studio}</option>`)
+                                      .join('');
+            compareStudioFilter.innerHTML = '<option value="all">Alle Studios (Gesamt)</option>' + studioOptions;
+
+
+            if (years.length > 0) {
+                document.getElementById('period-type-A').value = 'year';
+                document.getElementById('year-selector-A').classList.remove('hidden');
+                yearSelectA.value = years[years.length - 2] || years[0];
+                
+                document.getElementById('period-type-B').value = 'year';
+                document.getElementById('year-selector-B').classList.remove('hidden');
+                yearSelectB.value = years[years.length - 1] || years[0];
+            }
+
+            document.querySelectorAll('.compare-period-type').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    const period = e.target.dataset.period; // 'A' or 'B'
+                    const type = e.target.value;
+                    document.getElementById(`year-selector-${period}`).classList.toggle('hidden', type === 'all');
+                    document.getElementById(`quarter-selector-${period}`).classList.toggle('hidden', type !== 'quarter');
+                    document.getElementById(`month-selector-${period}`).classList.toggle('hidden', type !== 'month');
+                });
+            });
+
+            document.getElementById('run-compare-btn').addEventListener('click', runComparison);
+        }
+
+        // v5.6: Studio Filter hinzugefügt
+        function runComparison() {
+            const studioFilter = document.getElementById('compare-studio-filter').value;
+            
+            const settingsA = {
+                periodType: document.getElementById('period-type-A').value,
+                year: parseInt(document.getElementById('year-select-A').value),
+                quarter: document.getElementById('quarter-select-A').value,
+                month: parseInt(document.getElementById('month-select-A').value)
+            };
+            const settingsB = {
+                periodType: document.getElementById('period-type-B').value,
+                year: parseInt(document.getElementById('year-select-B').value),
+                quarter: document.getElementById('quarter-select-B').value,
+                month: parseInt(document.getElementById('month-select-B').value)
+            };
+
+            const checkinsA = getFilteredCheckins(settingsA, studioFilter);
+            const checkinsB = getFilteredCheckins(settingsB, studioFilter);
+
+            const statsA = calculateSimpleStats(checkinsA);
+            const statsB = calculateSimpleStats(checkinsB);
+
+            renderCompareResults(statsA, statsB);
+            document.getElementById('compare-results-section').classList.remove('hidden');
+        }
+
+        // v5.6: Unbekannt entfernt / FIX
+        function calculateSimpleStats(checkins) {
+            if (checkins.length === 0) {
+                return {
+                    total: 0, avgDaily: 0, male: 0, female: 0,
+                    ageGroups: { '<20': 0, '20-40': 0, '40-60': 0, '60+': 0 }
+                };
+            }
+            
+            const dailyStats = {};
+            let male = 0;
+            let female = 0;
+            const ageGroups = { '<20': 0, '20-40': 0, '40-60': 0, '60+': 0 };
+
+            checkins.forEach(c => {
+                dailyStats[c.dateKey] = (dailyStats[c.dateKey] || 0) + 1;
+                
+                if (c.gender === 'Männlich') male++;
+                else if (c.gender === 'Weiblich') female++;
+                // 'Unknown' wird ignoriert
+
+                if (c.ageGroup) {
+                    ageGroups[c.ageGroup]++;
+                }
+            });
+
+            const daysCount = Object.keys(dailyStats).length;
+            const avgDaily = daysCount > 0 ? (checkins.length / daysCount) : 0;
+
+            return {
+                total: checkins.length,
+                avgDaily: avgDaily,
+                male: male,
+                female: female,
+                ageGroups: ageGroups
+            };
+        }
+
+        // v5.6: Unbekannt entfernt / FIX
+        function renderCompareResults(statsA, statsB) {
+            const tbody = document.getElementById('compare-results-table');
+            tbody.innerHTML = '';
+
+            const formatPercent = (a, b) => {
+                if (a === 0) {
+                    return b > 0 ? '<span class="text-green-600 font-bold">NEU</span>' : '-';
+                }
+                if (b === 0) {
+                    return a > 0 ? '<span class="text-red-600 font-bold">-100.0%</span>' : '-';
+                }
+                const percent = ((b - a) / a) * 100;
+                const color = percent >= 0 ? 'text-green-600' : 'text-red-600';
+                const sign = percent >= 0 ? '+' : '';
+                return `<span class="${color} font-bold">${sign}${percent.toFixed(1)}%</span>`;
+            };
+            
+            const createRow = (label, valueA, valueB, isAvg = false) => {
+                const valA_str = isAvg ? valueA.toFixed(1) : valueA.toLocaleString('de-DE');
+                const valB_str = isAvg ? valueB.toFixed(1) : valueB.toLocaleString('de-DE');
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap font-medium">${label}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-700">${valA_str}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-700">${valB_str}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">${formatPercent(valueA, valueB)}</td>
+                    </tr>
+                `;
+            };
+            
+            tbody.innerHTML += createRow('Gesamt Check-ins', statsA.total, statsB.total);
+            tbody.innerHTML += createRow('Ø Check-ins / Tag', statsA.avgDaily, statsB.avgDaily, true);
+            
+            tbody.innerHTML += '<tr class="bg-gray-50"><td colspan="4" class="py-2"></td></tr>';
+            
+            tbody.innerHTML += createRow('Männer', statsA.male, statsB.male);
+            tbody.innerHTML += createRow('Frauen', statsA.female, statsB.female);
+            
+            tbody.innerHTML += '<tr class="bg-gray-50"><td colspan="4" class="py-2"></td></tr>';
+
+            AGE_GROUPS.forEach(group => {
+                tbody.innerHTML += createRow(`Altersgruppe ${group}`, statsA.ageGroups[group], statsB.ageGroups[group]);
+            });
+        }
+
 
         // ==================== TRENDS FILTERS ====================
         function setupTrendsFilters() {
@@ -989,10 +1483,9 @@
 
             filterSelect.addEventListener('change', (e) => {
                 renderTrendCharts(e.target.value);
-                analyzeTrendDeclines();
+                analyzeTrendAlerts();
             });
 
-            // Update trends info
             if (monthlyTrends.length > 0) {
                 document.getElementById('trends-period-count').textContent = monthlyTrends.length;
                 const firstMonth = monthlyTrends[0];
@@ -1003,32 +1496,29 @@
 
         // ==================== TREND CHARTS ====================
         function renderTrendCharts(studioFilter) {
-            const labels = monthlyTrends.map(m => m.period);
+            const labels = monthlyTrends.map(m => m.isProjected ? `${m.period} (Hochr.)` : m.period);
             
-            // Chart 1: Total Check-ins
             renderTrendTotalChart(labels, studioFilter);
-            
-            // Chart 2: Gender
             renderTrendGenderChart(labels, studioFilter);
-            
-            // Chart 3: Male Age Groups
             renderTrendMaleAgeChart(labels, studioFilter);
-            
-            // Chart 4: Female Age Groups
             renderTrendFemaleAgeChart(labels, studioFilter);
+        }
+
+        function getAggregatedMonthlyData(studioFilter, dataExtractor) {
+            return monthlyTrends.map(m => {
+                if (studioFilter === 'all') {
+                    return Object.values(m.studios).reduce((sum, s) => sum + dataExtractor(s), 0);
+                } else {
+                    return m.studios[studioFilter] ? dataExtractor(m.studios[studioFilter]) : 0;
+                }
+            });
         }
 
         function renderTrendTotalChart(labels, studioFilter) {
             const ctx = document.getElementById('chart-trends-total');
             if (charts.trendsTotal) charts.trendsTotal.destroy();
 
-            const data = monthlyTrends.map(m => {
-                if (studioFilter === 'all') {
-                    return Object.values(m.studios).reduce((sum, s) => sum + s.total, 0);
-                } else {
-                    return m.studios[studioFilter]?.total || 0;
-                }
-            });
+            const data = getAggregatedMonthlyData(studioFilter, (s) => s.total);
 
             charts.trendsTotal = new Chart(ctx, {
                 type: 'line',
@@ -1062,21 +1552,8 @@
             const ctx = document.getElementById('chart-trends-gender');
             if (charts.trendsGender) charts.trendsGender.destroy();
 
-            const maleData = monthlyTrends.map(m => {
-                if (studioFilter === 'all') {
-                    return Object.values(m.studios).reduce((sum, s) => sum + s.male, 0);
-                } else {
-                    return m.studios[studioFilter]?.male || 0;
-                }
-            });
-
-            const femaleData = monthlyTrends.map(m => {
-                if (studioFilter === 'all') {
-                    return Object.values(m.studios).reduce((sum, s) => sum + s.female, 0);
-                } else {
-                    return m.studios[studioFilter]?.female || 0;
-                }
-            });
+            const maleData = getAggregatedMonthlyData(studioFilter, (s) => s.male);
+            const femaleData = getAggregatedMonthlyData(studioFilter, (s) => s.female);
 
             charts.trendsGender = new Chart(ctx, {
                 type: 'line',
@@ -1087,7 +1564,6 @@
                             label: 'Männer',
                             data: maleData,
                             borderColor: '#1F2937',
-                            backgroundColor: 'rgba(31, 41, 55, 0.1)',
                             fill: false,
                             tension: 0.4
                         },
@@ -1095,7 +1571,6 @@
                             label: 'Frauen',
                             data: femaleData,
                             borderColor: '#DC2626',
-                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
                             fill: false,
                             tension: 0.4
                         }
@@ -1118,27 +1593,13 @@
             const ctx = document.getElementById('chart-trends-male-age');
             if (charts.trendsMaleAge) charts.trendsMaleAge.destroy();
 
-            const ageGroups = ['<20', '20-30', '30-40', '40+'];
-            const colors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
-
-            const datasets = ageGroups.map((group, idx) => {
-                const data = monthlyTrends.map(m => {
-                    if (studioFilter === 'all') {
-                        return Object.values(m.studios).reduce((sum, s) => sum + s.maleAge[group], 0);
-                    } else {
-                        return m.studios[studioFilter]?.maleAge[group] || 0;
-                    }
-                });
-
-                return {
-                    label: group,
-                    data,
-                    borderColor: colors[idx],
-                    backgroundColor: colors[idx] + '20',
-                    fill: false,
-                    tension: 0.4
-                };
-            });
+            const datasets = AGE_GROUPS.map((group, idx) => ({
+                label: group,
+                data: getAggregatedMonthlyData(studioFilter, (s) => s.ageGroups[group].male),
+                borderColor: AGE_GROUP_COLORS[idx],
+                fill: false,
+                tension: 0.4
+            }));
 
             charts.trendsMaleAge = new Chart(ctx, {
                 type: 'line',
@@ -1160,27 +1621,13 @@
             const ctx = document.getElementById('chart-trends-female-age');
             if (charts.trendsFemaleAge) charts.trendsFemaleAge.destroy();
 
-            const ageGroups = ['<20', '20-30', '30-40', '40+'];
-            const colors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
-
-            const datasets = ageGroups.map((group, idx) => {
-                const data = monthlyTrends.map(m => {
-                    if (studioFilter === 'all') {
-                        return Object.values(m.studios).reduce((sum, s) => sum + s.femaleAge[group], 0);
-                    } else {
-                        return m.studios[studioFilter]?.femaleAge[group] || 0;
-                    }
-                });
-
-                return {
-                    label: group,
-                    data,
-                    borderColor: colors[idx],
-                    backgroundColor: colors[idx] + '20',
-                    fill: false,
-                    tension: 0.4
-                };
-            });
+            const datasets = AGE_GROUPS.map((group, idx) => ({
+                label: group,
+                data: getAggregatedMonthlyData(studioFilter, (s) => s.ageGroups[group].female),
+                borderColor: AGE_GROUP_COLORS[idx],
+                fill: false,
+                tension: 0.4
+            }));
 
             charts.trendsFemaleAge = new Chart(ctx, {
                 type: 'line',
@@ -1199,136 +1646,195 @@
         }
 
         // ==================== TREND ANALYSIS ====================
-        function analyzeTrendDeclines() {
+        function analyzeTrendAlerts() {
             const studioFilter = document.getElementById('trends-studio-filter').value;
-            const container = document.getElementById('trend-alerts-container');
-            container.innerHTML = '';
+            const containerPositive = document.getElementById('trend-alerts-positive');
+            const containerNegative = document.getElementById('trend-alerts-negative');
+            containerPositive.innerHTML = '';
+            containerNegative.innerHTML = '';
 
             if (monthlyTrends.length < 3) {
-                container.innerHTML = '<p class="text-gray-500">Mindestens 3 Monate Daten nötig für Trend-Analyse.</p>';
+                const msg = '<p class="text-gray-500 text-center py-4">Mindestens 3 Monate Daten nötig.</p>';
+                containerPositive.innerHTML = msg;
+                containerNegative.innerHTML = msg;
                 return;
             }
+            
+            const recentTrends = monthlyTrends.slice(-3);
+            const t1 = recentTrends[0];
+            const t2 = recentTrends[1];
+            const t3 = recentTrends[2];
 
-            const alerts = [];
+            const alertsPositive = [];
+            const alertsNegative = [];
+
             const studios = studioFilter === 'all' ? Object.values(MAIN_DOORS) : [studioFilter];
+            const filterName = studioFilter === 'all' ? 'Alle Studios' : studioFilter;
 
-            studios.forEach(studio => {
-                const recent = monthlyTrends.slice(-3);
-                
-                // Check total decline
-                const totalValues = recent.map(m => studioFilter === 'all' 
-                    ? Object.values(m.studios).reduce((sum, s) => sum + s.total, 0)
-                    : m.studios[studio]?.total || 0
-                );
-                
-                if (totalValues[0] > totalValues[1] && totalValues[1] > totalValues[2]) {
-                    const decline = ((totalValues[0] - totalValues[2]) / totalValues[0] * 100).toFixed(0);
-                    alerts.push({
-                        type: 'warning',
-                        icon: '📉',
-                        title: `${studio}: Rückgang Check-ins`,
-                        description: `-${decline}% über die letzten 3 Monate (${totalValues[0]} → ${totalValues[2]})`,
-                        action: 'Ursachenanalyse dringend empfohlen'
-                    });
+            const extract = (monthData, studio, extractor) => {
+                if (studio === 'Alle Studios') {
+                    return Object.values(monthData.studios).reduce((sum, s) => sum + extractor(s), 0);
                 }
+                return monthData.studios[studio] ? extractor(monthData.studios[studio]) : 0;
+            };
 
-                // Check gender declines
-                ['male', 'female'].forEach(gender => {
-                    const genderValues = recent.map(m => studioFilter === 'all'
-                        ? Object.values(m.studios).reduce((sum, s) => sum + s[gender], 0)
-                        : m.studios[studio]?.[gender] || 0
-                    );
+            const v1_total = extract(t1, filterName, s => s.total);
+            const v3_total = extract(t3, filterName, s => s.total);
+            const totalTrendEl = document.getElementById('trends-total-percent');
+            
+            if (v1_total > 0) {
+                const percent = ((v3_total - v1_total) / v1_total) * 100;
+                const color = percent >= 0 ? 'text-green-600' : 'text-red-600';
+                const sign = percent >= 0 ? '+' : '';
+                totalTrendEl.innerHTML = `Gesamttrend (letzte 3 Mon.): <span class="${color} font-bold">${sign}${percent.toFixed(1)}%</span>`;
+            } else {
+                totalTrendEl.textContent = 'Gesamttrend (letzte 3 Mon.): -';
+            }
+            
+            if (studioFilter !== 'all') {
+                studios.forEach(studio => {
+                    const v1 = extract(t1, studio, s => s.total);
+                    const v2 = extract(t2, studio, s => s.total);
+                    const v3 = extract(t3, studio, s => s.total);
 
-                    if (genderValues[2] < genderValues[0] * 0.85) {
-                        const decline = ((genderValues[0] - genderValues[2]) / genderValues[0] * 100).toFixed(0);
-                        alerts.push({
-                            type: 'warning',
-                            icon: gender === 'male' ? '👨' : '👩',
-                            title: `${studio}: Rückgang ${gender === 'male' ? 'Männer' : 'Frauen'}`,
-                            description: `-${decline}% in den letzten 3 Monaten`,
-                            action: `${gender === 'male' ? 'Männer' : 'Frauen'}-spezifisches Marketing verstärken`
+                    if (v1 > v2 && v2 > v3 && v1 > 30) {
+                        const decline = ((v1 - v3) / v1 * 100).toFixed(0);
+                        alertsNegative.push({
+                            icon: '📉',
+                            title: `${studio}: Steter Rückgang`,
+                            description: `-${decline}% über 3 Monate (${v1} auf ${v3} Öffnungen)`
+                        });
+                    }
+                    if (v1 < v2 && v2 < v3 && v1 > 10) {
+                        const growth = ((v3 - v1) / v1 * 100).toFixed(0);
+                        alertsPositive.push({
+                            icon: '📈',
+                            title: `${studio}: Starkes Wachstum`,
+                            description: `+${growth}% über 3 Monate (${v1} auf ${v3} Öffnungen)`
                         });
                     }
                 });
+            }
 
-                // Check age group declines
-                const ageGroups = ['<20', '20-30', '30-40', '40+'];
-                ['maleAge', 'femaleAge'].forEach(ageType => {
-                    ageGroups.forEach(group => {
-                        const values = recent.map(m => studioFilter === 'all'
-                            ? Object.values(m.studios).reduce((sum, s) => sum + s[ageType][group], 0)
-                            : m.studios[studio]?.[ageType][group] || 0
-                        );
-
-                        if (values[0] > 0 && values[2] < values[0] * 0.75) {
-                            const decline = ((values[0] - values[2]) / values[0] * 100).toFixed(0);
-                            const gender = ageType === 'maleAge' ? 'Männer' : 'Frauen';
-                            alerts.push({
-                                type: 'info',
-                                icon: '📊',
-                                title: `${studio}: ${gender} ${group} rückläufig`,
-                                description: `-${decline}% in den letzten 3 Monaten`,
-                                action: 'Zielgruppen-spezifische Kampagne prüfen'
-                            });
-                        }
+            AGE_GROUPS.forEach(group => {
+                const v1_male = extract(t1, filterName, s => s.ageGroups[group].male);
+                const v3_male = extract(t3, filterName, s => s.ageGroups[group].male);
+                
+                if (v1_male > 10 && v3_male < v1_male * 0.7) {
+                    alertsNegative.push({
+                        icon: '👨',
+                        title: `Rückgang Männer ${group}`,
+                        description: `Rückgang von ${v1_male} auf ${v3_male} Öffnungen`
                     });
-                });
+                }
+                if (v1_male > 5 && v3_male > v1_male * 1.5) {
+                    alertsPositive.push({
+                        icon: '👨',
+                        title: `Wachstum Männer ${group}`,
+                        description: `Anstieg von ${v1_male} auf ${v3_male} Öffnungen`
+                    });
+                }
+
+                const v1_female = extract(t1, filterName, s => s.ageGroups[group].female);
+                const v3_female = extract(t3, filterName, s => s.ageGroups[group].female);
+                
+                if (v1_female > 10 && v3_female < v1_female * 0.7) {
+                    alertsNegative.push({
+                        icon: '👩',
+                        title: `Rückgang Frauen ${group}`,
+                        description: `Rückgang von ${v1_female} auf ${v3_female} Öffnungen`
+                    });
+                }
+                if (v1_female > 5 && v3_female > v1_female * 1.5) {
+                    alertsPositive.push({
+                        icon: '👩',
+                        title: `Wachstum Frauen ${group}`,
+                        description: `Anstieg von ${v1_female} auf ${v3_female} Öffnungen`
+                    });
+                }
             });
 
-            // Render alerts
-            const typeStyles = {
-                warning: 'bg-red-50 border-red-200',
-                info: 'bg-blue-50 border-blue-200'
-            };
-
-            if (alerts.length === 0) {
-                container.innerHTML = '<p class="text-green-600 text-center py-4">✅ Keine signifikanten Rückgänge erkannt</p>';
-            } else {
-                alerts.slice(0, 10).forEach(alert => {
-                    const div = document.createElement('div');
-                    div.className = `p-4 rounded-lg border-2 ${typeStyles[alert.type]}`;
-                    div.innerHTML = `
-                        <div class="flex items-start">
-                            <div class="text-2xl mr-3">${alert.icon}</div>
-                            <div class="flex-1">
-                                <h5 class="font-bold mb-1">${alert.title}</h5>
-                                <p class="text-sm text-gray-700 mb-1">${alert.description}</p>
-                                <p class="text-xs text-gray-600">💡 ${alert.action}</p>
-                            </div>
+            const renderAlert = (alert) => `
+                <div class="p-3 rounded-lg bg-white shadow-sm border">
+                    <div class="flex items-start">
+                        <div class="text-2xl mr-3">${alert.icon}</div>
+                        <div class="flex-1">
+                            <h5 class="font-bold text-sm">${alert.title}</h5>
+                            <p class="text-xs text-gray-700">${alert.description}</p>
                         </div>
-                    `;
-                    container.appendChild(div);
-                });
+                    </div>
+                </div>
+            `;
 
-                if (alerts.length > 10) {
-                    container.innerHTML += `<p class="text-xs text-gray-500 text-center mt-2">... und ${alerts.length - 10} weitere Trends</p>`;
-                }
+            if (alertsPositive.length === 0) {
+                containerPositive.innerHTML = '<p class="text-gray-500 text-center py-4 text-sm">Kein signifikantes Wachstum erkannt.</p>';
+            } else {
+                containerPositive.innerHTML = alertsPositive.map(renderAlert).join('');
+            }
+            
+            if (alertsNegative.length === 0) {
+                containerNegative.innerHTML = '<p class="text-gray-500 text-center py-4 text-sm">Keine signifikanten Rückgänge erkannt.</p>';
+            } else {
+                containerNegative.innerHTML = alertsNegative.map(renderAlert).join('');
             }
         }
+        
+        // ==================== MEMBER ANALYSIS ====================
+        function setupMemberFilter() {
+            const filterSelect = document.getElementById('member-studio-filter');
+            if (!filterSelect) return; 
+            
+            const { studioStats } = analysisResults;
+            if (!studioStats) return;
 
-        // ==================== HELPER FUNCTIONS ====================
-        function extractGender(name) {
-            if (name.startsWith('Herr')) return 'Männlich';
-            if (name.startsWith('Frau')) return 'Weiblich';
-            return 'Unknown';
-        }
-
-        function calculateAge(birthdate) {
-            if (!birthdate) return null;
-            const birth = new Date(birthdate);
-            if (isNaN(birth)) return null;
-            const today = new Date();
-            let age = today.getFullYear() - birth.getFullYear();
-            const m = today.getMonth() - birth.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-                age--;
+            const currentVal = filterSelect.value; 
+            
+            filterSelect.innerHTML = '<option value="all">Alle Studios (Gesamt)</option>';
+            Object.keys(studioStats).forEach(studio => {
+                const option = document.createElement('option');
+                option.value = studio;
+                option.textContent = studio;
+                filterSelect.appendChild(option);
+            });
+            
+            filterSelect.value = currentVal; 
+            
+            if (!filterSelect.dataset.listener) {
+                filterSelect.addEventListener('change', renderMemberAnalysis);
+                filterSelect.dataset.listener = 'true';
             }
-            return age;
         }
+        
+        function renderMemberAnalysis() {
+            const studioFilter = document.getElementById('member-studio-filter').value;
+            const topList = document.getElementById('top-members-list');
+            topList.innerHTML = '';
 
-        function formatDate(date) {
-            if (!date) return '-';
-            return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const checkins = studioFilter === 'all' 
+                ? analysisResults.checkins 
+                : analysisResults.checkins.filter(c => c.studio === studioFilter);
+
+            const memberCounts = {};
+            checkins.forEach(c => {
+                memberCounts[c.cusNumber] = (memberCounts[c.cusNumber] || 0) + 1;
+            });
+
+            const sortedMembers = Object.entries(memberCounts).sort((a, b) => b[1] - a[1]);
+
+            if (sortedMembers.length === 0) {
+                topList.innerHTML = '<p class="text-gray-500 text-center py-4 text-sm">Keine Daten für diese Auswahl.</p>';
+                return;
+            }
+
+            sortedMembers.slice(0, 20).forEach(([cusNumber, count]) => {
+                const item = document.createElement('div');
+                item.className = 'member-list-item text-sm';
+                item.innerHTML = `
+                    <span class="font-medium text-gray-800">${cusNumber}</span>
+                    <span class="font-bold text-red-600">${count} Check-ins</span>
+                `;
+                topList.appendChild(item);
+            });
         }
 
         // ==================== RENDER RESULTS ====================
@@ -1336,12 +1842,19 @@
             const { checkins, studioStats, dailyStats, startDate, endDate } = analysisResults;
 
             document.getElementById('period-display').textContent = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+            // Check if endDate is valid before formatting
+            if(endDate instanceof Date && !isNaN(endDate)) {
+                document.getElementById('last-event-display').textContent = `${formatDateTime(endDate)}`;
+            } else {
+                 document.getElementById('last-event-display').textContent = '-'; // Handle invalid date
+            }
+
 
             document.getElementById('stat-total-checkins').textContent = checkins.length.toLocaleString('de-DE');
             
             const daysCount = Object.keys(dailyStats).length;
-            const avgDaily = Math.round(checkins.length / daysCount);
-            document.getElementById('stat-avg-daily').textContent = avgDaily.toLocaleString('de-DE');
+            const avgDaily = (daysCount > 0) ? (checkins.length / daysCount).toFixed(1) : "0.0";
+            document.getElementById('stat-avg-daily').textContent = avgDaily.replace('.', ',');
 
             const topStudio = Object.entries(studioStats).sort((a, b) => b[1] - a[1])[0];
             if (topStudio) {
@@ -1356,10 +1869,37 @@
             renderStudioComparisonTable();
             renderUtilizationCharts();
             renderHeatmapTable();
+            setupMemberFilter(); 
+            renderMemberAnalysis(); 
             renderInsights();
         }
 
-        // ==================== BASIC CHARTS (keeping existing code) ====================
+        // ==================== BASIC CHARTS ====================
+        
+        const datalabelsInside = {
+            anchor: 'end',
+            align: 'end',
+            offset: -4,
+            color: 'white',
+            font: { weight: 'bold' }
+        };
+        const datalabelsOutside = {
+            anchor: 'end',
+            align: 'top',
+            color: '#1F2937',
+            font: { weight: 'bold' }
+        };
+        const getDatalabelConfig = (ctx) => {
+            const value = ctx.dataset.data[ctx.dataIndex];
+            const max = ctx.chart.scales.y.max;
+            // Check if max is valid and greater than 0 to prevent division by zero or NaN
+            if (max && max > 0 && typeof value === 'number') {
+                 return (value / max > 0.9) ? datalabelsInside : datalabelsOutside;
+            }
+             return datalabelsOutside; // Default if max is invalid or value is not a number
+        };
+
+
         function renderStudioChart() {
             const { studioStats } = analysisResults;
             const ctx = document.getElementById('chart-studios');
@@ -1383,16 +1923,13 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            formatter: (value) => value.toLocaleString('de-DE'),
-                            color: '#1F2937',
-                            font: { weight: 'bold' }
-                        }
+                        datalabels: getDatalabelConfig // FIX: Pass function directly
                     },
                     scales: {
-                        y: { beginAtZero: true }
+                        y: { 
+                            beginAtZero: true,
+                            grace: '10%' 
+                        }
                     }
                 },
                 plugins: [ChartDataLabels]
@@ -1427,7 +1964,8 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        datalabels: { display: false }
                     },
                     scales: {
                         y: { beginAtZero: true }
@@ -1437,7 +1975,7 @@
         }
 
         function renderDemographicsCharts() {
-            const { studioStats, checkins } = analysisResults;
+            const { studioStats } = analysisResults;
             const filterSelect = document.getElementById('demo-studio-filter');
             filterSelect.innerHTML = '<option value="all">Alle Studios</option>';
             Object.keys(studioStats).forEach(studio => {
@@ -1454,14 +1992,18 @@
             });
         }
 
+        // v5.6: Unbekannt entfernt
         function updateDemographicsCharts(studioFilter) {
             const checkins = studioFilter === 'all' 
                 ? analysisResults.checkins 
                 : analysisResults.checkins.filter(c => c.studio === studioFilter);
 
-            // Gender chart
-            const genderCounts = { 'Männlich': 0, 'Weiblich': 0 };
-            checkins.forEach(c => genderCounts[c.gender]++);
+            const genderCounts = { 'Männlich': 0, 'Weiblich': 0 }; // Unknown removed
+            checkins.forEach(c => {
+                if (c.gender === 'Männlich' || c.gender === 'Weiblich') {
+                   genderCounts[c.gender]++; 
+                }
+            });
             
             const genderCtx = document.getElementById('chart-gender');
             if (charts.gender) charts.gender.destroy();
@@ -1469,10 +2011,10 @@
             charts.gender = new Chart(genderCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Männer', 'Frauen'],
+                    labels: ['Männer', 'Frauen'], // Unknown removed
                     datasets: [{
                         data: [genderCounts['Männlich'], genderCounts['Weiblich']],
-                        backgroundColor: ['#1F2937', '#DC2626']
+                        backgroundColor: ['#1F2937', '#DC2626'] // Unknown color removed
                     }]
                 },
                 options: {
@@ -1482,8 +2024,9 @@
                         datalabels: {
                             formatter: (value, ctx) => {
                                 const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                if (sum === 0) return '0%';
                                 const percent = ((value / sum) * 100).toFixed(0);
-                                return `${percent}%`;
+                                return percent > 5 ? `${percent}%` : ''; 
                             },
                             color: '#fff',
                             font: { weight: 'bold', size: 16 }
@@ -1493,20 +2036,19 @@
                 plugins: [ChartDataLabels]
             });
 
-            // Age chart
-            const ageCounts = { '<20': 0, '20-30': 0, '30-40': 0, '40+': 0 };
+            const ageCounts = {};
+            AGE_GROUPS.forEach(g => ageCounts[g] = 0);
+            
             checkins.forEach(c => {
-                if (c.age === null) return;
-                if (c.age < 20) ageCounts['<20']++;
-                else if (c.age < 30) ageCounts['20-30']++;
-                else if (c.age < 40) ageCounts['30-40']++;
-                else ageCounts['40+']++;
+                if (c.ageGroup) {
+                    ageCounts[c.ageGroup]++;
+                }
             });
 
             const ageCtx = document.getElementById('chart-age');
             if (charts.age) charts.age.destroy();
             
-            charts.age = new Chart(ageCtx, {
+            charts.age = new Chart(ageCtx, { // FIX: Use ageCtx here
                 type: 'bar',
                 data: {
                     labels: Object.keys(ageCounts),
@@ -1521,38 +2063,27 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            color: '#1F2937',
-                            font: { weight: 'bold' }
-                        }
+                        datalabels: getDatalabelConfig // FIX: Pass function directly
                     },
                     scales: {
-                        y: { beginAtZero: true }
+                        y: { 
+                            beginAtZero: true,
+                            grace: '10%'
+                        }
                     }
                 },
                 plugins: [ChartDataLabels]
             });
 
-            // Age-Gender breakdown
-            const ageGenderData = {
-                '<20': { male: 0, female: 0 },
-                '20-30': { male: 0, female: 0 },
-                '30-40': { male: 0, female: 0 },
-                '40+': { male: 0, female: 0 }
-            };
+            const ageGenderData = {};
+            AGE_GROUPS.forEach(g => {
+                ageGenderData[g] = { male: 0, female: 0 };
+            });
 
             checkins.forEach(c => {
-                if (c.age === null) return;
-                let group;
-                if (c.age < 20) group = '<20';
-                else if (c.age < 30) group = '20-30';
-                else if (c.age < 40) group = '30-40';
-                else group = '40+';
-
-                if (c.gender === 'Männlich') ageGenderData[group].male++;
-                else if (c.gender === 'Weiblich') ageGenderData[group].female++;
+                if (!c.ageGroup) return;
+                if (c.gender === 'Männlich') ageGenderData[c.ageGroup].male++;
+                else if (c.gender === 'Weiblich') ageGenderData[c.ageGroup].female++;
             });
 
             const ageGenderCtx = document.getElementById('chart-age-gender');
@@ -1580,7 +2111,7 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { position: 'top' },
-                        datalabels: {
+                        datalabels: { // FIX: Use standard config, function might be overkill here
                             anchor: 'end',
                             align: 'top',
                             color: '#1F2937',
@@ -1589,13 +2120,14 @@
                     },
                     scales: {
                         x: { stacked: false },
-                        y: { stacked: false, beginAtZero: true }
+                        y: { stacked: false, beginAtZero: true, grace: '10%' }
                     }
                 },
                 plugins: [ChartDataLabels]
             });
         }
 
+        // v5.6: Unbekannt entfernt / FIX for ReferenceError
         function renderStudioComparisonTable() {
             const { checkins, studioStats } = analysisResults;
             const tbody = document.getElementById('studio-comparison-table');
@@ -1607,7 +2139,8 @@
                 const studioCheckins = checkins.filter(c => c.studio === studio);
                 const males = studioCheckins.filter(c => c.gender === 'Männlich').length;
                 const females = studioCheckins.filter(c => c.gender === 'Weiblich').length;
-                const total = males + females;
+                // FIX: 'total' ist jetzt nur die Summe von Männern und Frauen
+                const total = males + females; 
                 
                 const ages = studioCheckins.map(c => c.age).filter(a => a !== null);
                 const avgAge = ages.length > 0 ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : '-';
@@ -1616,8 +2149,8 @@
                 row.innerHTML = `
                     <td class="px-4 py-3 font-medium">${studio}</td>
                     <td class="px-4 py-3">${studioStats[studio].toLocaleString('de-DE')}</td>
-                    <td class="px-4 py-3">${((males / total) * 100).toFixed(0)}%</td>
-                    <td class="px-4 py-3">${((females / total) * 100).toFixed(0)}%</td>
+                    <td class="px-4 py-3">${total > 0 ? ((males / total) * 100).toFixed(0) : 0}%</td>
+                    <td class="px-4 py-3">${total > 0 ? ((females / total) * 100).toFixed(0) : 0}%</td>
                     <td class="px-4 py-3">${avgAge}</td>
                 `;
                 tbody.appendChild(row);
@@ -1692,15 +2225,13 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            color: '#1F2937',
-                            font: { weight: 'bold' }
-                        }
+                        datalabels: getDatalabelConfig // FIX: Pass function directly
                     },
                     scales: {
-                        y: { beginAtZero: true }
+                        y: { 
+                            beginAtZero: true,
+                            grace: '10%'
+                        }
                     }
                 },
                 plugins: [ChartDataLabels]
@@ -1735,8 +2266,8 @@
                     const key = `${day}-${hour}`;
                     const count = hourlyStats[key] || 0;
                     const intensity = count > 0 ? (count / maxCount) : 0;
-                    const bgColor = count === 0 ? '#f9fafb' : `rgba(220, 38, 38, ${0.2 + intensity * 0.8})`;
-                    const textColor = intensity > 0.5 ? '#fff' : '#1F2937';
+                    const bgColor = count === 0 ? '#f9fafb' : `rgba(220, 38, 38, ${0.1 + intensity * 0.9})`;
+                    const textColor = intensity > 0.6 ? '#fff' : '#1F2937';
                     html += `<td class="heatmap-cell" style="background-color: ${bgColor}; color: ${textColor};">${count > 0 ? count : '-'}</td>`;
                 }
                 html += '</tr>';
@@ -1755,25 +2286,31 @@
 
             const totalMales = checkins.filter(c => c.gender === 'Männlich').length;
             const totalFemales = checkins.filter(c => c.gender === 'Weiblich').length;
-            const avgFemalePercent = (totalFemales / (totalMales + totalFemales)) * 100;
+            
+            if (totalMales + totalFemales > 0) {
+                const avgFemalePercent = (totalFemales / (totalMales + totalFemales)) * 100;
 
-            Object.keys(studioStats).forEach(studio => {
-                const studioCheckins = checkins.filter(c => c.studio === studio);
-                const males = studioCheckins.filter(c => c.gender === 'Männlich').length;
-                const females = studioCheckins.filter(c => c.gender === 'Weiblich').length;
-                const femalePercent = (females / (males + females)) * 100;
-
-                if (Math.abs(femalePercent - avgFemalePercent) > 8) {
-                    const diff = femalePercent - avgFemalePercent;
-                    insights.push({
-                        type: diff < 0 ? 'warning' : 'info',
-                        icon: '👥',
-                        title: `${studio}: ${diff < 0 ? 'Wenig' : 'Viele'} Frauen`,
-                        description: `${femalePercent.toFixed(0)}% Frauen (Durchschnitt: ${avgFemalePercent.toFixed(0)}%)`,
-                        action: diff < 0 ? 'Gezielte Marketing-Kampagne für Frauen empfohlen' : 'Gute Geschlechterbalance beibehalten'
-                    });
-                }
-            });
+                Object.keys(studioStats).forEach(studio => {
+                    const studioCheckins = checkins.filter(c => c.studio === studio);
+                    const males = studioCheckins.filter(c => c.gender === 'Männlich').length;
+                    const females = studioCheckins.filter(c => c.gender === 'Weiblich').length;
+                    const total = males + females;
+                    
+                    if (total > 0) {
+                        const femalePercent = (females / total) * 100;
+                        if (Math.abs(femalePercent - avgFemalePercent) > 8) {
+                            const diff = femalePercent - avgFemalePercent;
+                            insights.push({
+                                type: diff < 0 ? 'warning' : 'info',
+                                icon: '👥',
+                                title: `${studio}: ${diff < 0 ? 'Wenig' : 'Viele'} Frauen`,
+                                description: `${femalePercent.toFixed(0)}% Frauen (Schnitt: ${avgFemalePercent.toFixed(0)}%)`,
+                                action: diff < 0 ? 'Gezielte Marketing-Kampagne für Frauen empfohlen' : 'Gute Geschlechterbalance beibehalten'
+                            });
+                        }
+                    }
+                });
+            }
 
             const { hourlyStats } = analysisResults;
             const hourTotals = {};
@@ -1787,20 +2324,25 @@
                     type: 'success',
                     icon: '⏰',
                     title: `Peak Hour: ${peakHour[0]}:00 Uhr`,
-                    description: `${peakHour[1]} Check-ins während dieser Stunde`,
+                    description: `Stärkste Stunde im gesamten Zeitraum`,
                     action: 'Personal-Planung entsprechend anpassen'
                 });
             }
 
-            const youngCheckins = checkins.filter(c => c.age && c.age < 20).length;
-            const youngPercent = (youngCheckins / checkins.length) * 100;
-            if (youngPercent > 15) {
-                insights.push({
+            const ageGroupCounts = {};
+            AGE_GROUPS.forEach(g => ageGroupCounts[g] = 0);
+            checkins.forEach(c => {
+                if(c.ageGroup) ageGroupCounts[c.ageGroup]++;
+            });
+            
+            const topAgeGroup = Object.entries(ageGroupCounts).sort((a, b) => b[1] - a[1])[0];
+            if (topAgeGroup && checkins.length > 0) {
+                 insights.push({
                     type: 'info',
-                    icon: '📈',
-                    title: 'Hoher Anteil junger Mitglieder',
-                    description: `${youngPercent.toFixed(0)}% der Check-ins von unter 20-Jährigen`,
-                    action: 'Jugend-Angebote und Social Media Marketing verstärken'
+                    icon: '🎂',
+                    title: `Stärkste Altersgruppe: ${topAgeGroup[0]}`,
+                    description: `Diese Gruppe macht ${((topAgeGroup[1]/checkins.length)*100).toFixed(0)}% der Check-ins aus`,
+                    action: 'Angebote für diese Zielgruppe prüfen/stärken'
                 });
             }
 
@@ -1847,9 +2389,14 @@
             });
         }
 
+        // ==================== EXPORT & SYNC ====================
         function setupExport() {
             document.getElementById('export-btn').addEventListener('click', () => {
-                const dataStr = JSON.stringify({ analysisResults, monthlyTrends }, null, 2);
+                const data = {
+                    lastLoadedTimestamp: lastLoadedTimestamp,
+                    allCheckins: allCheckins
+                };
+                const dataStr = JSON.stringify(data, null, 2);
                 const blob = new Blob([dataStr], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -1858,10 +2405,190 @@
                 a.click();
             });
 
-            document.getElementById('save-github-btn').addEventListener('click', () => {
-                alert('GitHub-Speicherung: Diese Funktion wird in der nächsten Version implementiert.');
+            document.getElementById('sync-github-btn').addEventListener('click', () => {
+                document.getElementById('github-modal').classList.add('active');
             });
+            
+            setupGitHubModal();
         }
+
+        // ==================== GITHUB SYNC ====================
+        function setupGitHubModal() {
+            const savedConfig = localStorage.getItem('githubConfig');
+            if (savedConfig) {
+                githubConfig = JSON.parse(savedConfig);
+                document.getElementById('github-owner').value = githubConfig.owner;
+                document.getElementById('github-repo').value = githubConfig.repo;
+            }
+            githubConfig.token = null;
+            document.getElementById('github-token').value = '';
+
+            updateDataStatus('Nicht geladen');
+
+            document.getElementById('github-load-btn').addEventListener('click', loadFromGitHub);
+            document.getElementById('github-save-btn').addEventListener('click', saveToGitHub);
+        }
+        
+        function updateGitHubConfig() {
+            githubConfig.owner = document.getElementById('github-owner').value;
+            githubConfig.repo = document.getElementById('github-repo').value;
+            githubConfig.token = document.getElementById('github-token').value;
+            
+            localStorage.setItem('githubConfig', JSON.stringify({
+                owner: githubConfig.owner,
+                repo: githubConfig.repo
+            }));
+        }
+
+        function setGitHubLoading(isLoading, text = 'Aktion wird ausgeführt...') {
+            document.getElementById('github-loading').classList.toggle('hidden', !isLoading);
+            document.getElementById('github-loading-text').textContent = text;
+            document.getElementById('github-load-btn').disabled = isLoading;
+            document.getElementById('github-save-btn').disabled = isLoading;
+            document.getElementById('github-error').classList.add('hidden');
+        }
+
+        function showGitHubError(message) {
+            setGitHubLoading(false);
+            const errorEl = document.getElementById('github-error');
+            errorEl.textContent = `Fehler: ${message}`;
+            errorEl.classList.remove('hidden');
+        }
+
+        function updateDataStatus(status) {
+            const statusEl = document.getElementById('github-status');
+            statusEl.value = status;
+            statusEl.classList.remove('text-green-600', 'text-yellow-600', 'font-bold');
+            
+            if (status.startsWith('Geladen')) {
+                statusEl.classList.add('text-green-600', 'font-bold');
+            } else if (status.startsWith('Lokal')) {
+                statusEl.classList.add('text-yellow-600', 'font-bold');
+            }
+        }
+
+        async function makeGitHubRequest(url, method, body = null) {
+            updateGitHubConfig();
+            const { token } = githubConfig;
+            if (!token) {
+                showGitHubError('Kein GitHub Token angegeben.');
+                return null;
+            }
+
+            const headers = {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: headers,
+                    body: body ? JSON.stringify(body) : null
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || `${response.status} ${response.statusText}`);
+                }
+                
+                if (response.status === 200 || response.status === 201) {
+                    return { success: true, data: await response.json() };
+                }
+                if (response.status === 204) {
+                    return { success: true, data: {} };
+                }
+                return { success: true, data: await response.json() };
+
+            } catch (err) {
+                console.error('GitHub API Error:', err);
+                showGitHubError(err.message);
+                return null;
+            }
+        }
+
+        async function loadFromGitHub() {
+            setGitHubLoading(true, 'Lade Daten von GitHub...');
+            const { owner, repo, filePath } = githubConfig;
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?t=${new Date().getTime()}`; // Cache bust
+
+            const result = await makeGitHubRequest(url, 'GET');
+            if (result && result.data.type === 'file' && result.data.encoding === 'base64') {
+                githubDataSha = result.data.sha;
+                
+                const content = atob(result.data.content);
+                const data = JSON.parse(content);
+
+                allCheckins = (data.allCheckins || []).map(c => ({
+                    ...c,
+                    timestamp: new Date(c.timestamp)
+                }));
+                lastLoadedTimestamp = data.lastLoadedTimestamp;
+
+                allCheckins.sort((a, b) => a.timestamp - b.timestamp);
+                
+                setGitHubLoading(false);
+                updateDataStatus(`Geladen von GitHub (${allCheckins.length} Einträge)`);
+                closeModal('github-modal');
+                
+                document.getElementById('initial-load-section').classList.add('hidden');
+                document.getElementById('upload-section').classList.add('hidden');
+                document.getElementById('results-section').classList.remove('hidden');
+                document.getElementById('time-filter-section').classList.remove('hidden');
+                document.getElementById('export-btn').classList.remove('hidden');
+                document.getElementById('add-data-btn').classList.remove('hidden');
+
+                generateMonthlyTrends();
+                filteredCheckins = [...allCheckins];
+                processAnalysis();
+                setupTimeFilters();
+                setupTrendsFilters();
+                renderTrendCharts('all');
+                analyzeTrendAlerts();
+
+            } else {
+                showGitHubError('Datei nicht gefunden oder ungültiges Format. (Pfad: ' + filePath + ')');
+                githubDataSha = null;
+            }
+        }
+
+        async function saveToGitHub() {
+            if (allCheckins.length === 0) {
+                showGitHubError('Keine Daten zum Speichern vorhanden.');
+                return;
+            }
+            
+            setGitHubLoading(true, 'Speichere Daten auf GitHub...');
+            const { owner, repo, filePath } = githubConfig;
+            
+            const dataToSave = {
+                lastLoadedTimestamp: lastLoadedTimestamp,
+                allCheckins: allCheckins
+            };
+            
+            // UTF-8 fähiges Base64 encoding
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(dataToSave))));
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+
+            const body = {
+                message: `SAMS GYM Analytics Update - ${new Date().toISOString()}`,
+                content: content,
+                sha: githubDataSha
+            };
+
+            const result = await makeGitHubRequest(url, 'PUT', body);
+            
+            if (result && result.success) {
+                githubDataSha = result.data.content.sha;
+                setGitHubLoading(false);
+                updateDataStatus(`Gespeichert! (${allCheckins.length} Einträge)`);
+                closeModal('github-modal');
+            } else {
+                // Fehler wird schon im makeGitHubRequest angezeigt
+            }
+        }
+
 
         // ==================== INIT ====================
         document.addEventListener('DOMContentLoaded', () => {
@@ -1873,3 +2600,4 @@
     </script>
 </body>
 </html>
+
