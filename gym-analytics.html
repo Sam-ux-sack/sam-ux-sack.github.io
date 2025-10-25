@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAMS GYM Analytics Dashboard v3</title>
+    <title>SAMS GYM Analytics Dashboard v4</title>
     
     <meta name="theme-color" content="#DC2626">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -110,7 +110,7 @@
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h1 class="text-3xl font-bold" style="color: #DC2626;">
-                        🏋️ SAMS GYM Analytics v3
+                        🏋️ SAMS GYM Analytics v4
                     </h1>
                     <p class="text-sm text-gray-600 mt-1">
                         Analyse-Zeitraum: <span id="period-display" class="font-medium">-</span>
@@ -181,7 +181,7 @@
             </div>
         </header>
 
-        <!-- Initial Load Section (ÄNDERUNG #5) -->
+        <!-- Initial Load Section -->
         <div id="initial-load-section" class="bg-white p-8 rounded-xl shadow-md mb-8 text-center">
             <div class="mb-6">
                 <div class="text-6xl mb-4">🏋️</div>
@@ -214,7 +214,7 @@
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Zoho Contacts Upload (ÄNDERUNG #6) -->
+                <!-- Zoho Contacts Upload -->
                 <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-red-600 transition cursor-pointer" id="contacts-drop-zone">
                     <input type="file" id="contacts-input" accept=".csv" class="hidden">
                     <div class="text-gray-600">
@@ -230,7 +230,7 @@
                     </div>
                 </div>
 
-                <!-- SALTO Events Upload (ÄNDERUNG #6) -->
+                <!-- SALTO Events Upload -->
                 <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-red-600 transition cursor-pointer" id="events-drop-zone">
                     <input type="file" id="events-input" accept=".csv" class="hidden">
                     <div class="text-gray-600">
@@ -253,7 +253,7 @@
 
             <div id="loading" class="hidden mt-6 text-center">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: #DC2626;"></div>
-                <p class="mt-2 text-gray-600">Daten werden analysiert...</p>
+                <p class="mt-2 text-gray-600">Daten werden analysiert und in Monate aufgeteilt...</p>
             </div>
         </div>
 
@@ -341,7 +341,7 @@
                         </div>
                     </div>
 
-                    <!-- Demographics Tab (ÄNDERUNG #2) -->
+                    <!-- Demographics Tab -->
                     <div id="tab-demographics" class="tab-content">
                         <h3 class="text-xl font-bold mb-4">Mitglieder-Demographics</h3>
                         
@@ -368,7 +368,6 @@
                             </div>
                         </div>
 
-                        <!-- ÄNDERUNG #2: Altersgruppen nach Geschlecht -->
                         <div class="bg-gray-50 p-4 rounded-lg mb-6">
                             <h4 class="font-semibold mb-3">Altersgruppen nach Geschlecht</h4>
                             <div class="chart-container-small">
@@ -396,7 +395,7 @@
                         </div>
                     </div>
 
-                    <!-- Utilization Tab (ÄNDERUNG #3) -->
+                    <!-- Utilization Tab -->
                     <div id="tab-utilization" class="tab-content">
                         <h3 class="text-xl font-bold mb-4">Auslastung nach Studio & Zeit</h3>
                         
@@ -426,43 +425,60 @@
                         </div>
                     </div>
 
-                    <!-- Trends Tab (ÄNDERUNG #4) -->
+                    <!-- Trends Tab (NEUE VERSION) -->
                     <div id="tab-trends" class="tab-content">
-                        <h3 class="text-xl font-bold mb-4">Trend-Analyse über Zeit</h3>
+                        <h3 class="text-xl font-bold mb-4">Monatliche Trend-Analyse</h3>
                         
-                        <div id="trends-no-data" class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 text-center">
-                            <p class="text-lg font-semibold text-blue-900 mb-2">📊 Keine historischen Daten gefunden</p>
-                            <p class="text-sm text-blue-700 mb-4">Speichere diese Analyse auf GitHub, um Trends über Zeit zu verfolgen.</p>
+                        <div id="trends-info" class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                            <p class="text-sm text-blue-900">
+                                📊 <strong id="trends-period-count">0</strong> Monate analysiert | 
+                                Zeitraum: <strong id="trends-date-range">-</strong>
+                            </p>
                         </div>
 
-                        <div id="trends-content" class="hidden">
-                            <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                                <h4 class="font-semibold mb-3">Check-ins pro Studio (Zeitverlauf)</h4>
-                                <div class="chart-container">
-                                    <canvas id="chart-studio-trends"></canvas>
-                                </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">Studio wählen:</label>
+                            <select id="trends-studio-filter" class="px-4 py-2 border border-gray-300 rounded-lg">
+                                <option value="all">Alle Studios (Gesamt)</option>
+                            </select>
+                        </div>
+
+                        <!-- Total Check-ins Trend -->
+                        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                            <h4 class="font-semibold mb-3">📈 Check-ins pro Monat</h4>
+                            <div class="chart-container">
+                                <canvas id="chart-trends-total"></canvas>
                             </div>
+                        </div>
 
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                                <div class="bg-gray-50 p-4 rounded-lg">
-                                    <h4 class="font-semibold mb-3">Geschlechter-Entwicklung</h4>
-                                    <div class="chart-container-small">
-                                        <canvas id="chart-gender-trends"></canvas>
-                                    </div>
-                                </div>
-
-                                <div class="bg-gray-50 p-4 rounded-lg">
-                                    <h4 class="font-semibold mb-3">Altersgruppen-Entwicklung</h4>
-                                    <div class="chart-container-small">
-                                        <canvas id="chart-age-trends"></canvas>
-                                    </div>
-                                </div>
+                        <!-- Gender Trends -->
+                        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                            <h4 class="font-semibold mb-3">👥 Männer vs. Frauen (monatlich)</h4>
+                            <div class="chart-container">
+                                <canvas id="chart-trends-gender"></canvas>
                             </div>
+                        </div>
 
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <h4 class="font-semibold mb-3">⚠️ Erkannte Trends & Rückgänge</h4>
-                                <div id="trend-alerts-container" class="space-y-3">
-                                </div>
+                        <!-- Male Age Groups Trend -->
+                        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                            <h4 class="font-semibold mb-3">👨 Männer nach Altersgruppen</h4>
+                            <div class="chart-container">
+                                <canvas id="chart-trends-male-age"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Female Age Groups Trend -->
+                        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                            <h4 class="font-semibold mb-3">👩 Frauen nach Altersgruppen</h4>
+                            <div class="chart-container">
+                                <canvas id="chart-trends-female-age"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Trend Alerts -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-semibold mb-3">⚠️ Erkannte Trends & Rückgänge</h4>
+                            <div id="trend-alerts-container" class="space-y-3">
                             </div>
                         </div>
                     </div>
@@ -478,7 +494,7 @@
         </div>
     </div>
 
-    <!-- Example Modals (ÄNDERUNG #6) -->
+    <!-- Example Modals -->
     <div id="example-modal" class="modal">
         <div class="modal-content">
             <div class="flex items-center justify-between mb-4">
@@ -497,7 +513,6 @@
             token: null
         };
 
-        // ÄNDERUNG #1: Korrigierte Türnamen
         const MAIN_DOORS = {
             'Susten Haupttüre': 'Susten GYM',
             'Strongman rechts': 'Susten CrossGYM',
@@ -511,11 +526,11 @@
         let allCheckins = [];
         let filteredCheckins = [];
         let analysisResults = null;
-        let historicalData = [];
+        let monthlyTrends = [];  // NEW: Array of monthly data points
         let charts = {};
         let isLoadedFromGitHub = false;
 
-        // ==================== EXAMPLE DATA (ÄNDERUNG #6) ====================
+        // ==================== EXAMPLE DATA ====================
         function showExample(type) {
             const modal = document.getElementById('example-modal');
             const title = document.getElementById('example-title');
@@ -629,7 +644,7 @@
             document.getElementById('example-modal').classList.remove('active');
         }
 
-        // ==================== INITIAL LOAD (ÄNDERUNG #5) ====================
+        // ==================== INITIAL LOAD ====================
         function setupInitialLoad() {
             document.getElementById('load-existing-btn').addEventListener('click', loadExistingData);
             document.getElementById('start-new-btn').addEventListener('click', startNewAnalysis);
@@ -649,72 +664,12 @@
         }
 
         async function loadExistingData() {
-            const token = localStorage.getItem('github_token');
-            if (!token) {
-                alert('Kein GitHub Token gefunden. Bitte starte eine neue Analyse und speichere sie auf GitHub.');
-                return;
-            }
-
-            GITHUB_CONFIG.token = token;
-            document.getElementById('initial-loading').classList.remove('hidden');
-
-            try {
-                await loadHistoricalData();
-                
-                if (historicalData.length === 0) {
-                    throw new Error('Keine Daten gefunden');
-                }
-
-                // Load most recent data
-                const latest = historicalData[historicalData.length - 1];
-                reconstructAnalysisFromGitHub(latest);
-
-                document.getElementById('initial-load-section').classList.add('hidden');
-                document.getElementById('results-section').classList.remove('hidden');
-                document.getElementById('time-filter-section').classList.remove('hidden');
-                document.getElementById('add-data-btn').classList.remove('hidden');
-                document.getElementById('export-btn').classList.remove('hidden');
-                document.getElementById('save-github-btn').classList.remove('hidden');
-                
-                isLoadedFromGitHub = true;
-
-                // Show trends if we have historical data
-                if (historicalData.length > 1) {
-                    document.getElementById('trends-no-data').classList.add('hidden');
-                    document.getElementById('trends-content').classList.remove('hidden');
-                    renderTrendCharts();
-                    analyzeTrends();
-                }
-
-            } catch (error) {
-                console.error('Load error:', error);
-                alert('❌ Keine gespeicherten Daten gefunden.\n\nBitte starte eine neue Analyse.');
-                document.getElementById('initial-loading').classList.add('hidden');
-            }
+            alert('Funktion wird noch implementiert. Bitte starte eine neue Analyse.');
         }
 
         function startNewAnalysis() {
             document.getElementById('initial-load-section').classList.add('hidden');
             document.getElementById('upload-section').classList.remove('hidden');
-        }
-
-        function reconstructAnalysisFromGitHub(data) {
-            // Reconstruct checkins from summary data
-            filteredCheckins = [];
-            allCheckins = [];
-            
-            // This is simplified - in reality we'd need to store more granular data
-            analysisResults = {
-                checkins: [],
-                studioStats: data.summary.studios,
-                dailyStats: {},
-                hourlyStats: {},
-                weekdayStats: {},
-                startDate: new Date(data.period.start),
-                endDate: new Date(data.period.end)
-            };
-
-            renderResults();
         }
 
         // ==================== FILE UPLOAD HANDLERS ====================
@@ -792,7 +747,7 @@
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('analyze-btn').classList.add('hidden');
 
-            setTimeout(async () => {
+            setTimeout(() => {
                 const contactsLookup = {};
                 contactsData.forEach(contact => {
                     const cusNumber = contact['Kundennummer'] || contact['CUSTOMER_ID'];
@@ -841,20 +796,12 @@
                 });
 
                 allCheckins.sort((a, b) => a.timestamp - b.timestamp);
+
+                // NEW: Generate monthly trends
+                generateMonthlyTrends();
+
                 filteredCheckins = [...allCheckins];
                 processAnalysis();
-
-                // ÄNDERUNG #4: Auto-load historical data and combine
-                if (isLoadedFromGitHub || localStorage.getItem('github_token')) {
-                    GITHUB_CONFIG.token = localStorage.getItem('github_token');
-                    await loadHistoricalData();
-                    if (historicalData.length > 0) {
-                        document.getElementById('trends-no-data').classList.add('hidden');
-                        document.getElementById('trends-content').classList.remove('hidden');
-                        renderTrendCharts();
-                        analyzeTrends();
-                    }
-                }
 
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('results-section').classList.remove('hidden');
@@ -865,7 +812,84 @@
                 document.getElementById('add-data-btn').classList.remove('hidden');
 
                 setupTimeFilters();
+                setupTrendsFilters();
+                renderTrendCharts('all');
+                analyzeTrendDeclines();
             }, 500);
+        }
+
+        // ==================== MONTHLY TRENDS GENERATION ====================
+        function generateMonthlyTrends() {
+            const monthlyData = {};
+
+            allCheckins.forEach(c => {
+                const year = c.timestamp.getFullYear();
+                const month = c.timestamp.getMonth();
+                const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+                if (!monthlyData[key]) {
+                    monthlyData[key] = {
+                        period: key,
+                        year: year,
+                        month: month + 1,
+                        checkins: []
+                    };
+                }
+                monthlyData[key].checkins.push(c);
+            });
+
+            // Convert to array and calculate stats for each month
+            monthlyTrends = Object.keys(monthlyData).sort().map(key => {
+                const data = monthlyData[key];
+                const checkins = data.checkins;
+
+                // Calculate stats per studio
+                const studios = {};
+                Object.keys(MAIN_DOORS).forEach(door => {
+                    const studio = MAIN_DOORS[door];
+                    const studioCheckins = checkins.filter(c => c.studio === studio);
+
+                    // Total
+                    const total = studioCheckins.length;
+
+                    // Gender
+                    const male = studioCheckins.filter(c => c.gender === 'Männlich').length;
+                    const female = studioCheckins.filter(c => c.gender === 'Weiblich').length;
+
+                    // Age groups for males
+                    const maleAge = {
+                        '<20': studioCheckins.filter(c => c.gender === 'Männlich' && c.age !== null && c.age < 20).length,
+                        '20-30': studioCheckins.filter(c => c.gender === 'Männlich' && c.age !== null && c.age >= 20 && c.age < 30).length,
+                        '30-40': studioCheckins.filter(c => c.gender === 'Männlich' && c.age !== null && c.age >= 30 && c.age < 40).length,
+                        '40+': studioCheckins.filter(c => c.gender === 'Männlich' && c.age !== null && c.age >= 40).length
+                    };
+
+                    // Age groups for females
+                    const femaleAge = {
+                        '<20': studioCheckins.filter(c => c.gender === 'Weiblich' && c.age !== null && c.age < 20).length,
+                        '20-30': studioCheckins.filter(c => c.gender === 'Weiblich' && c.age !== null && c.age >= 20 && c.age < 30).length,
+                        '30-40': studioCheckins.filter(c => c.gender === 'Weiblich' && c.age !== null && c.age >= 30 && c.age < 40).length,
+                        '40+': studioCheckins.filter(c => c.gender === 'Weiblich' && c.age !== null && c.age >= 40).length
+                    };
+
+                    studios[studio] = {
+                        total,
+                        male,
+                        female,
+                        maleAge,
+                        femaleAge
+                    };
+                });
+
+                return {
+                    period: data.period,
+                    year: data.year,
+                    month: data.month,
+                    studios
+                };
+            });
+
+            console.log('Monthly trends generated:', monthlyTrends.length, 'months');
         }
 
         function processAnalysis() {
@@ -950,6 +974,338 @@
             processAnalysis();
         }
 
+        // ==================== TRENDS FILTERS ====================
+        function setupTrendsFilters() {
+            const filterSelect = document.getElementById('trends-studio-filter');
+            const studios = Object.values(MAIN_DOORS);
+            
+            filterSelect.innerHTML = '<option value="all">Alle Studios (Gesamt)</option>';
+            studios.forEach(studio => {
+                const option = document.createElement('option');
+                option.value = studio;
+                option.textContent = studio;
+                filterSelect.appendChild(option);
+            });
+
+            filterSelect.addEventListener('change', (e) => {
+                renderTrendCharts(e.target.value);
+                analyzeTrendDeclines();
+            });
+
+            // Update trends info
+            if (monthlyTrends.length > 0) {
+                document.getElementById('trends-period-count').textContent = monthlyTrends.length;
+                const firstMonth = monthlyTrends[0];
+                const lastMonth = monthlyTrends[monthlyTrends.length - 1];
+                document.getElementById('trends-date-range').textContent = `${firstMonth.period} - ${lastMonth.period}`;
+            }
+        }
+
+        // ==================== TREND CHARTS ====================
+        function renderTrendCharts(studioFilter) {
+            const labels = monthlyTrends.map(m => m.period);
+            
+            // Chart 1: Total Check-ins
+            renderTrendTotalChart(labels, studioFilter);
+            
+            // Chart 2: Gender
+            renderTrendGenderChart(labels, studioFilter);
+            
+            // Chart 3: Male Age Groups
+            renderTrendMaleAgeChart(labels, studioFilter);
+            
+            // Chart 4: Female Age Groups
+            renderTrendFemaleAgeChart(labels, studioFilter);
+        }
+
+        function renderTrendTotalChart(labels, studioFilter) {
+            const ctx = document.getElementById('chart-trends-total');
+            if (charts.trendsTotal) charts.trendsTotal.destroy();
+
+            const data = monthlyTrends.map(m => {
+                if (studioFilter === 'all') {
+                    return Object.values(m.studios).reduce((sum, s) => sum + s.total, 0);
+                } else {
+                    return m.studios[studioFilter]?.total || 0;
+                }
+            });
+
+            charts.trendsTotal = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Check-ins',
+                        data,
+                        borderColor: '#DC2626',
+                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderTrendGenderChart(labels, studioFilter) {
+            const ctx = document.getElementById('chart-trends-gender');
+            if (charts.trendsGender) charts.trendsGender.destroy();
+
+            const maleData = monthlyTrends.map(m => {
+                if (studioFilter === 'all') {
+                    return Object.values(m.studios).reduce((sum, s) => sum + s.male, 0);
+                } else {
+                    return m.studios[studioFilter]?.male || 0;
+                }
+            });
+
+            const femaleData = monthlyTrends.map(m => {
+                if (studioFilter === 'all') {
+                    return Object.values(m.studios).reduce((sum, s) => sum + s.female, 0);
+                } else {
+                    return m.studios[studioFilter]?.female || 0;
+                }
+            });
+
+            charts.trendsGender = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Männer',
+                            data: maleData,
+                            borderColor: '#1F2937',
+                            backgroundColor: 'rgba(31, 41, 55, 0.1)',
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Frauen',
+                            data: femaleData,
+                            borderColor: '#DC2626',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            fill: false,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderTrendMaleAgeChart(labels, studioFilter) {
+            const ctx = document.getElementById('chart-trends-male-age');
+            if (charts.trendsMaleAge) charts.trendsMaleAge.destroy();
+
+            const ageGroups = ['<20', '20-30', '30-40', '40+'];
+            const colors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
+
+            const datasets = ageGroups.map((group, idx) => {
+                const data = monthlyTrends.map(m => {
+                    if (studioFilter === 'all') {
+                        return Object.values(m.studios).reduce((sum, s) => sum + s.maleAge[group], 0);
+                    } else {
+                        return m.studios[studioFilter]?.maleAge[group] || 0;
+                    }
+                });
+
+                return {
+                    label: group,
+                    data,
+                    borderColor: colors[idx],
+                    backgroundColor: colors[idx] + '20',
+                    fill: false,
+                    tension: 0.4
+                };
+            });
+
+            charts.trendsMaleAge = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderTrendFemaleAgeChart(labels, studioFilter) {
+            const ctx = document.getElementById('chart-trends-female-age');
+            if (charts.trendsFemaleAge) charts.trendsFemaleAge.destroy();
+
+            const ageGroups = ['<20', '20-30', '30-40', '40+'];
+            const colors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
+
+            const datasets = ageGroups.map((group, idx) => {
+                const data = monthlyTrends.map(m => {
+                    if (studioFilter === 'all') {
+                        return Object.values(m.studios).reduce((sum, s) => sum + s.femaleAge[group], 0);
+                    } else {
+                        return m.studios[studioFilter]?.femaleAge[group] || 0;
+                    }
+                });
+
+                return {
+                    label: group,
+                    data,
+                    borderColor: colors[idx],
+                    backgroundColor: colors[idx] + '20',
+                    fill: false,
+                    tension: 0.4
+                };
+            });
+
+            charts.trendsFemaleAge = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // ==================== TREND ANALYSIS ====================
+        function analyzeTrendDeclines() {
+            const studioFilter = document.getElementById('trends-studio-filter').value;
+            const container = document.getElementById('trend-alerts-container');
+            container.innerHTML = '';
+
+            if (monthlyTrends.length < 3) {
+                container.innerHTML = '<p class="text-gray-500">Mindestens 3 Monate Daten nötig für Trend-Analyse.</p>';
+                return;
+            }
+
+            const alerts = [];
+            const studios = studioFilter === 'all' ? Object.values(MAIN_DOORS) : [studioFilter];
+
+            studios.forEach(studio => {
+                const recent = monthlyTrends.slice(-3);
+                
+                // Check total decline
+                const totalValues = recent.map(m => studioFilter === 'all' 
+                    ? Object.values(m.studios).reduce((sum, s) => sum + s.total, 0)
+                    : m.studios[studio]?.total || 0
+                );
+                
+                if (totalValues[0] > totalValues[1] && totalValues[1] > totalValues[2]) {
+                    const decline = ((totalValues[0] - totalValues[2]) / totalValues[0] * 100).toFixed(0);
+                    alerts.push({
+                        type: 'warning',
+                        icon: '📉',
+                        title: `${studio}: Rückgang Check-ins`,
+                        description: `-${decline}% über die letzten 3 Monate (${totalValues[0]} → ${totalValues[2]})`,
+                        action: 'Ursachenanalyse dringend empfohlen'
+                    });
+                }
+
+                // Check gender declines
+                ['male', 'female'].forEach(gender => {
+                    const genderValues = recent.map(m => studioFilter === 'all'
+                        ? Object.values(m.studios).reduce((sum, s) => sum + s[gender], 0)
+                        : m.studios[studio]?.[gender] || 0
+                    );
+
+                    if (genderValues[2] < genderValues[0] * 0.85) {
+                        const decline = ((genderValues[0] - genderValues[2]) / genderValues[0] * 100).toFixed(0);
+                        alerts.push({
+                            type: 'warning',
+                            icon: gender === 'male' ? '👨' : '👩',
+                            title: `${studio}: Rückgang ${gender === 'male' ? 'Männer' : 'Frauen'}`,
+                            description: `-${decline}% in den letzten 3 Monaten`,
+                            action: `${gender === 'male' ? 'Männer' : 'Frauen'}-spezifisches Marketing verstärken`
+                        });
+                    }
+                });
+
+                // Check age group declines
+                const ageGroups = ['<20', '20-30', '30-40', '40+'];
+                ['maleAge', 'femaleAge'].forEach(ageType => {
+                    ageGroups.forEach(group => {
+                        const values = recent.map(m => studioFilter === 'all'
+                            ? Object.values(m.studios).reduce((sum, s) => sum + s[ageType][group], 0)
+                            : m.studios[studio]?.[ageType][group] || 0
+                        );
+
+                        if (values[0] > 0 && values[2] < values[0] * 0.75) {
+                            const decline = ((values[0] - values[2]) / values[0] * 100).toFixed(0);
+                            const gender = ageType === 'maleAge' ? 'Männer' : 'Frauen';
+                            alerts.push({
+                                type: 'info',
+                                icon: '📊',
+                                title: `${studio}: ${gender} ${group} rückläufig`,
+                                description: `-${decline}% in den letzten 3 Monaten`,
+                                action: 'Zielgruppen-spezifische Kampagne prüfen'
+                            });
+                        }
+                    });
+                });
+            });
+
+            // Render alerts
+            const typeStyles = {
+                warning: 'bg-red-50 border-red-200',
+                info: 'bg-blue-50 border-blue-200'
+            };
+
+            if (alerts.length === 0) {
+                container.innerHTML = '<p class="text-green-600 text-center py-4">✅ Keine signifikanten Rückgänge erkannt</p>';
+            } else {
+                alerts.slice(0, 10).forEach(alert => {
+                    const div = document.createElement('div');
+                    div.className = `p-4 rounded-lg border-2 ${typeStyles[alert.type]}`;
+                    div.innerHTML = `
+                        <div class="flex items-start">
+                            <div class="text-2xl mr-3">${alert.icon}</div>
+                            <div class="flex-1">
+                                <h5 class="font-bold mb-1">${alert.title}</h5>
+                                <p class="text-sm text-gray-700 mb-1">${alert.description}</p>
+                                <p class="text-xs text-gray-600">💡 ${alert.action}</p>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+
+                if (alerts.length > 10) {
+                    container.innerHTML += `<p class="text-xs text-gray-500 text-center mt-2">... und ${alerts.length - 10} weitere Trends</p>`;
+                }
+            }
+        }
+
         // ==================== HELPER FUNCTIONS ====================
         function extractGender(name) {
             if (name.startsWith('Herr')) return 'Männlich';
@@ -1003,7 +1359,7 @@
             renderInsights();
         }
 
-        // ==================== CHARTS ====================
+        // ==================== BASIC CHARTS (keeping existing code) ====================
         function renderStudioChart() {
             const { studioStats } = analysisResults;
             const ctx = document.getElementById('chart-studios');
@@ -1179,7 +1535,7 @@
                 plugins: [ChartDataLabels]
             });
 
-            // ÄNDERUNG #2: Age-Gender breakdown
+            // Age-Gender breakdown
             const ageGenderData = {
                 '<20': { male: 0, female: 0 },
                 '20-30': { male: 0, female: 0 },
@@ -1268,7 +1624,6 @@
             });
         }
 
-        // ==================== UTILIZATION CHARTS (ÄNDERUNG #3) ====================
         function renderUtilizationCharts() {
             const { studioStats } = analysisResults;
             const filterSelect = document.getElementById('util-studio-filter');
@@ -1293,7 +1648,6 @@
                 ? analysisResults.checkins 
                 : analysisResults.checkins.filter(c => c.studio === studioFilter);
 
-            // ÄNDERUNG #3: Calculate average per weekday
             const weekdayTotals = {};
             const weekdayCounts = {};
             
@@ -1302,7 +1656,6 @@
                 weekdayTotals[day] = (weekdayTotals[day] || 0) + 1;
             });
 
-            // Count unique dates for each weekday
             const uniqueDates = {};
             checkins.forEach(c => {
                 const day = c.day;
@@ -1494,34 +1847,9 @@
             });
         }
 
-        // ==================== GITHUB & TRENDS (Simplified) ====================
-        async function saveToGitHub() {
-            if (!GITHUB_CONFIG.token) {
-                const token = prompt('Bitte gib deinen GitHub Personal Access Token ein:');
-                if (!token) return;
-                GITHUB_CONFIG.token = token;
-                localStorage.setItem('github_token', token);
-            }
-
-            alert('GitHub-Speicherung: Diese Funktion wird noch implementiert.\n\nIn der finalen Version werden Daten automatisch gespeichert.');
-        }
-
-        async function loadHistoricalData() {
-            // Simplified - would actually load from GitHub
-            historicalData = [];
-        }
-
-        function renderTrendCharts() {
-            // Placeholder for trend charts
-        }
-
-        function analyzeTrends() {
-            // Placeholder for trend analysis
-        }
-
         function setupExport() {
             document.getElementById('export-btn').addEventListener('click', () => {
-                const dataStr = JSON.stringify(analysisResults, null, 2);
+                const dataStr = JSON.stringify({ analysisResults, monthlyTrends }, null, 2);
                 const blob = new Blob([dataStr], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -1530,7 +1858,9 @@
                 a.click();
             });
 
-            document.getElementById('save-github-btn').addEventListener('click', saveToGitHub);
+            document.getElementById('save-github-btn').addEventListener('click', () => {
+                alert('GitHub-Speicherung: Diese Funktion wird in der nächsten Version implementiert.');
+            });
         }
 
         // ==================== INIT ====================
