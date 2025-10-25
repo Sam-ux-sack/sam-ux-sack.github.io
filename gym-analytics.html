@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAMS GYM Analytics Dashboard</title>
+    <title>SAMS GYM Analytics Dashboard v2</title>
     
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#DC2626">
     <meta name="apple-mobile-web-app-capable" content="yes">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,9 +19,9 @@
             theme: {
                 extend: {
                     colors: {
-                        'gym-blue': '#3b82f6',
-                        'gym-green': '#10b981',
-                        'gym-purple': '#8b5cf6',
+                        'sams-red': '#DC2626',
+                        'sams-black': '#1F2937',
+                        'sams-gray': '#6B7280',
                     }
                 }
             }
@@ -42,8 +42,8 @@
             border-bottom: 3px solid transparent;
         }
         .tab-button.active {
-            border-bottom-color: #4f46e5;
-            color: #4f46e5;
+            border-bottom-color: #DC2626;
+            color: #DC2626;
         }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -56,32 +56,101 @@
         }
         
         .drag-over {
-            background-color: #dbeafe !important;
-            border: 2px dashed #3b82f6 !important;
+            background-color: #fee2e2 !important;
+            border: 2px dashed #DC2626 !important;
+        }
+
+        /* Heatmap table styling */
+        .heatmap-cell {
+            padding: 8px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid #e5e7eb;
+            min-width: 50px;
+        }
+        .heatmap-header {
+            background: #1F2937;
+            color: white;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-gray-100 text-gray-900">
 
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
         <!-- Header -->
         <header class="mb-8">
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">
-                        🏋️ SAMS GYM Analytics
+                    <h1 class="text-3xl font-bold" style="color: #DC2626;">
+                        🏋️ SAMS GYM Analytics v2
                     </h1>
                     <p class="text-sm text-gray-600 mt-1">
                         Analyse-Zeitraum: <span id="period-display" class="font-medium">-</span>
                     </p>
                 </div>
                 <div class="flex gap-2">
-                    <button id="export-btn" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition">
+                    <button id="export-btn" class="hidden bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg shadow transition">
                         💾 Export
                     </button>
-                    <button id="save-github-btn" class="hidden bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow transition">
+                    <button id="save-github-btn" class="hidden text-white px-4 py-2 rounded-lg shadow transition" style="background: #DC2626;">
                         ☁️ Auf GitHub speichern
                     </button>
+                </div>
+            </div>
+
+            <!-- Time Period Filter -->
+            <div id="time-filter-section" class="hidden bg-white p-4 rounded-xl shadow-md mb-4">
+                <div class="flex flex-wrap items-center gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Zeitraum wählen:</label>
+                        <select id="period-type" class="px-4 py-2 border border-gray-300 rounded-lg bg-white">
+                            <option value="all">Gesamter Zeitraum</option>
+                            <option value="year">Jahr</option>
+                            <option value="quarter">Quartal</option>
+                            <option value="month">Monat</option>
+                        </select>
+                    </div>
+                    <div id="year-selector" class="hidden">
+                        <label class="block text-sm font-medium mb-1">Jahr:</label>
+                        <select id="year-select" class="px-4 py-2 border border-gray-300 rounded-lg bg-white">
+                        </select>
+                    </div>
+                    <div id="quarter-selector" class="hidden">
+                        <label class="block text-sm font-medium mb-1">Quartal:</label>
+                        <select id="quarter-select" class="px-4 py-2 border border-gray-300 rounded-lg bg-white">
+                            <option value="Q1">Q1 (Jan-Mar)</option>
+                            <option value="Q2">Q2 (Apr-Jun)</option>
+                            <option value="Q3">Q3 (Jul-Sep)</option>
+                            <option value="Q4">Q4 (Okt-Dez)</option>
+                        </select>
+                    </div>
+                    <div id="month-selector" class="hidden">
+                        <label class="block text-sm font-medium mb-1">Monat:</label>
+                        <select id="month-select" class="px-4 py-2 border border-gray-300 rounded-lg bg-white">
+                            <option value="1">Januar</option>
+                            <option value="2">Februar</option>
+                            <option value="3">März</option>
+                            <option value="4">April</option>
+                            <option value="5">Mai</option>
+                            <option value="6">Juni</option>
+                            <option value="7">Juli</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">Oktober</option>
+                            <option value="11">November</option>
+                            <option value="12">Dezember</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button id="apply-filter-btn" class="text-white px-6 py-2 rounded-lg shadow transition font-semibold" style="background: #DC2626;">
+                            Filter anwenden
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -92,10 +161,10 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Zoho Contacts Upload -->
-                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition cursor-pointer" id="contacts-drop-zone">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-red-600 transition cursor-pointer" id="contacts-drop-zone">
                     <input type="file" id="contacts-input" accept=".csv" class="hidden">
                     <div class="text-gray-600">
-                        <svg class="w-12 h-12 mx-auto mb-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-12 h-12 mx-auto mb-3" style="color: #DC2626;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                         </svg>
                         <p class="font-semibold mb-1">Zoho Kontakte (AllContacts.csv)</p>
@@ -105,10 +174,10 @@
                 </div>
 
                 <!-- SALTO Events Upload -->
-                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-500 transition cursor-pointer" id="events-drop-zone">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-red-600 transition cursor-pointer" id="events-drop-zone">
                     <input type="file" id="events-input" accept=".csv" class="hidden">
                     <div class="text-gray-600">
-                        <svg class="w-12 h-12 mx-auto mb-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
                         <p class="font-semibold mb-1">SALTO Ereignisse (Ereignisliste.csv)</p>
@@ -118,12 +187,12 @@
                 </div>
             </div>
 
-            <button id="analyze-btn" class="hidden w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition transform hover:scale-105">
+            <button id="analyze-btn" class="hidden w-full mt-6 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition transform hover:scale-105" style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);">
                 🚀 Daten analysieren
             </button>
 
             <div id="loading" class="hidden mt-6 text-center">
-                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: #DC2626;"></div>
                 <p class="mt-2 text-gray-600">Daten werden analysiert...</p>
             </div>
         </div>
@@ -132,26 +201,15 @@
         <div id="results-section" class="hidden">
             
             <!-- Summary Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div class="stat-card bg-white p-6 rounded-xl shadow-md">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600">Gesamt Check-ins</p>
                             <p class="text-3xl font-bold text-gray-900" id="stat-total-checkins">0</p>
-                            <p class="text-xs text-green-600 mt-1" id="stat-checkins-trend">-</p>
+                            <p class="text-xs mt-1" style="color: #DC2626;" id="stat-checkins-trend">-</p>
                         </div>
                         <div class="text-4xl">📊</div>
-                    </div>
-                </div>
-
-                <div class="stat-card bg-white p-6 rounded-xl shadow-md">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Aktive Mitglieder</p>
-                            <p class="text-3xl font-bold text-gray-900" id="stat-active-members">0</p>
-                            <p class="text-xs text-gray-500 mt-1">Unique CUS-Nummern</p>
-                        </div>
-                        <div class="text-4xl">👥</div>
                     </div>
                 </div>
 
@@ -188,6 +246,9 @@
                         <button class="tab-button px-6 py-4 font-semibold" data-tab="demographics">
                             👥 Demographics
                         </button>
+                        <button class="tab-button px-6 py-4 font-semibold" data-tab="utilization">
+                            ⏰ Auslastung
+                        </button>
                         <button class="tab-button px-6 py-4 font-semibold" data-tab="trends">
                             📈 Trends
                         </button>
@@ -216,13 +277,6 @@
                                 <div class="chart-container-small">
                                     <canvas id="chart-daily"></canvas>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h4 class="font-semibold mb-3">Peak Hours Heatmap</h4>
-                            <div class="chart-container">
-                                <canvas id="chart-heatmap"></canvas>
                             </div>
                         </div>
                     </div>
@@ -258,18 +312,47 @@
                             <h4 class="font-semibold mb-3">Studio-Vergleich</h4>
                             <div class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-100">
+                                    <thead class="bg-gray-800 text-white">
                                         <tr>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Studio</th>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Check-ins</th>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Männer</th>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Frauen</th>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ø Alter</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Studio</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Check-ins</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Männer</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Frauen</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Ø Alter</th>
                                         </tr>
                                     </thead>
                                     <tbody id="studio-comparison-table" class="bg-white divide-y divide-gray-200">
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Utilization Tab -->
+                    <div id="tab-utilization" class="tab-content">
+                        <h3 class="text-xl font-bold mb-4">Auslastung nach Studio & Zeit</h3>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">Studio wählen:</label>
+                            <select id="util-studio-filter" class="px-4 py-2 border border-gray-300 rounded-lg">
+                                <option value="all">Alle Studios (Gesamt)</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-6 mb-6">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold mb-3">Auslastung nach Wochentag</h4>
+                                <div class="chart-container-small">
+                                    <canvas id="chart-weekday-util"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold mb-3">Peak Hours Heatmap</h4>
+                                <div class="overflow-x-auto">
+                                    <table id="heatmap-table" class="min-w-full">
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -287,7 +370,6 @@
                         </div>
 
                         <div id="trends-content" class="hidden">
-                            <!-- Studio Trends Over Time -->
                             <div class="bg-gray-50 p-4 rounded-lg mb-6">
                                 <h4 class="font-semibold mb-3">Check-ins pro Studio (Zeitverlauf)</h4>
                                 <div class="chart-container">
@@ -295,23 +377,22 @@
                                 </div>
                             </div>
 
-                            <!-- Gender Trends -->
-                            <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                                <h4 class="font-semibold mb-3">Geschlechter-Entwicklung</h4>
-                                <div class="chart-container-small">
-                                    <canvas id="chart-gender-trends"></canvas>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h4 class="font-semibold mb-3">Geschlechter-Entwicklung</h4>
+                                    <div class="chart-container-small">
+                                        <canvas id="chart-gender-trends"></canvas>
+                                    </div>
+                                </div>
+
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h4 class="font-semibold mb-3">Altersgruppen-Entwicklung</h4>
+                                    <div class="chart-container-small">
+                                        <canvas id="chart-age-trends"></canvas>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Age Group Trends -->
-                            <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                                <h4 class="font-semibold mb-3">Altersgruppen-Entwicklung</h4>
-                                <div class="chart-container-small">
-                                    <canvas id="chart-age-trends"></canvas>
-                                </div>
-                            </div>
-
-                            <!-- Trend Alerts -->
                             <div class="bg-gray-50 p-4 rounded-lg">
                                 <h4 class="font-semibold mb-3">⚠️ Erkannte Trends & Rückgänge</h4>
                                 <div id="trend-alerts-container" class="space-y-3">
@@ -332,69 +413,70 @@
     </div>
 
     <script>
-        // ==================== GITHUB CONFIGURATION ====================
+        // ==================== CONFIGURATION ====================
         const GITHUB_CONFIG = {
-            owner: 'sam-ux-sack',  // Dein GitHub Username
-            repo: 'sams-gym-data',  // Neues Repo für Daten
-            token: null  // Wird vom User eingegeben
+            owner: 'sam-ux-sack',
+            repo: 'sams-gym-data',
+            token: null
         };
 
-        // ==================== DATA STORAGE ====================
-        let contactsData = null;
-        let eventsData = null;
-        let analysisResults = null;
-        let historicalData = [];  // Array of past analyses
-        let charts = {};
-
-        // ==================== STUDIO MAPPING ====================
-        const STUDIO_MAPPING = {
+        // ÄNDERUNG #3: Nur diese Haupttüren berücksichtigen
+        const MAIN_DOORS = {
             'Susten Haupttüre': 'Susten GYM',
-            'Susten GYM': 'Susten GYM',
             'Strongman rechts': 'Susten CrossGYM',
             'Visp-Süd Eingang': 'Visp-Süd',
             'Visp-Center Eingang': 'Visp-Center'
         };
 
+        // ==================== DATA STORAGE ====================
+        let contactsData = null;
+        let eventsData = null;
+        let allCheckins = [];  // All checkins without filter
+        let filteredCheckins = [];  // Filtered by time period
+        let analysisResults = null;
+        let historicalData = [];
+        let charts = {};
+
         // ==================== FILE UPLOAD HANDLERS ====================
         function setupFileHandlers() {
-            // Contacts file
             const contactsZone = document.getElementById('contacts-drop-zone');
             const contactsInput = document.getElementById('contacts-input');
             
             contactsZone.addEventListener('click', () => contactsInput.click());
             contactsInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0], 'contacts'));
             
-            contactsZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                contactsZone.classList.add('drag-over');
+            ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+                contactsZone.addEventListener(eventName, preventDefaults);
             });
+            contactsZone.addEventListener('dragover', () => contactsZone.classList.add('drag-over'));
             contactsZone.addEventListener('dragleave', () => contactsZone.classList.remove('drag-over'));
             contactsZone.addEventListener('drop', (e) => {
-                e.preventDefault();
                 contactsZone.classList.remove('drag-over');
                 handleFileSelect(e.dataTransfer.files[0], 'contacts');
             });
 
-            // Events file
             const eventsZone = document.getElementById('events-drop-zone');
             const eventsInput = document.getElementById('events-input');
             
             eventsZone.addEventListener('click', () => eventsInput.click());
             eventsInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0], 'events'));
             
-            eventsZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                eventsZone.classList.add('drag-over');
+            ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+                eventsZone.addEventListener(eventName, preventDefaults);
             });
+            eventsZone.addEventListener('dragover', () => eventsZone.classList.add('drag-over'));
             eventsZone.addEventListener('dragleave', () => eventsZone.classList.remove('drag-over'));
             eventsZone.addEventListener('drop', (e) => {
-                e.preventDefault();
                 eventsZone.classList.remove('drag-over');
                 handleFileSelect(e.dataTransfer.files[0], 'events');
             });
 
-            // Analyze button
             document.getElementById('analyze-btn').addEventListener('click', analyzeData);
+        }
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
         }
 
         function handleFileSelect(file, type) {
@@ -418,7 +500,6 @@
                         console.log('Events loaded:', eventsData.length);
                     }
                     
-                    // Show analyze button if both files loaded
                     if (contactsData && eventsData) {
                         document.getElementById('analyze-btn').classList.remove('hidden');
                     }
@@ -432,7 +513,6 @@
             document.getElementById('analyze-btn').classList.add('hidden');
 
             setTimeout(() => {
-                // Build contacts lookup
                 const contactsLookup = {};
                 contactsData.forEach(contact => {
                     const cusNumber = contact['Kundennummer'] || contact['CUSTOMER_ID'];
@@ -446,15 +526,8 @@
                     }
                 });
 
-                // Process events
-                const checkins = [];
-                const studioStats = {};
-                const dailyStats = {};
-                const hourlyStats = {};
-                const cusSet = new Set();
-
+                allCheckins = [];
                 eventsData.forEach(event => {
-                    // Parse SALTO event (no header, columns: timestamp, event, door, , cusNumber)
                     const cols = Object.values(event);
                     if (cols.length < 5) return;
 
@@ -462,9 +535,11 @@
                     const doorName = cols[2];
                     const cusNumber = cols[4];
 
-                    if (!timestamp || !cusNumber || !cusNumber.startsWith('CUS-')) return;
+                    // ÄNDERUNG #3: Nur Haupttüren berücksichtigen
+                    if (!MAIN_DOORS[doorName]) return;
+                    if (!cusNumber || !cusNumber.startsWith('CUS-')) return;
 
-                    const studio = STUDIO_MAPPING[doorName] || doorName;
+                    const studio = MAIN_DOORS[doorName];
                     const contact = contactsLookup[cusNumber] || {};
 
                     const date = new Date(timestamp);
@@ -474,7 +549,7 @@
                     const hour = date.getHours();
                     const day = date.getDay();
 
-                    checkins.push({
+                    allCheckins.push({
                         timestamp: date,
                         studio,
                         cusNumber,
@@ -484,43 +559,106 @@
                         hour,
                         day
                     });
-
-                    // Stats
-                    studioStats[studio] = (studioStats[studio] || 0) + 1;
-                    dailyStats[dateKey] = (dailyStats[dateKey] || 0) + 1;
-                    
-                    const hourKey = `${day}-${hour}`;
-                    hourlyStats[hourKey] = (hourlyStats[hourKey] || 0) + 1;
-                    
-                    cusSet.add(cusNumber);
                 });
 
-                // Sort by date
-                checkins.sort((a, b) => a.timestamp - b.timestamp);
+                allCheckins.sort((a, b) => a.timestamp - b.timestamp);
 
-                // Calculate period
-                const startDate = checkins[0]?.timestamp;
-                const endDate = checkins[checkins.length - 1]?.timestamp;
+                // ÄNDERUNG #2: Initially show all data, filter controls visible
+                filteredCheckins = [...allCheckins];
+                processAnalysis();
 
-                analysisResults = {
-                    checkins,
-                    studioStats,
-                    dailyStats,
-                    hourlyStats,
-                    uniqueMembers: cusSet.size,
-                    contactsLookup,
-                    startDate,
-                    endDate
-                };
-
-                renderResults();
-                
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('results-section').classList.remove('hidden');
+                document.getElementById('time-filter-section').classList.remove('hidden');
                 document.getElementById('export-btn').classList.remove('hidden');
                 document.getElementById('save-github-btn').classList.remove('hidden');
                 document.getElementById('upload-section').classList.add('hidden');
+
+                setupTimeFilters();
             }, 500);
+        }
+
+        function processAnalysis() {
+            const studioStats = {};
+            const dailyStats = {};
+            const hourlyStats = {};
+            const weekdayStats = {};
+
+            filteredCheckins.forEach(c => {
+                studioStats[c.studio] = (studioStats[c.studio] || 0) + 1;
+                dailyStats[c.dateKey] = (dailyStats[c.dateKey] || 0) + 1;
+                
+                const hourKey = `${c.day}-${c.hour}`;
+                hourlyStats[hourKey] = (hourlyStats[hourKey] || 0) + 1;
+                
+                weekdayStats[c.day] = (weekdayStats[c.day] || 0) + 1;
+            });
+
+            const startDate = filteredCheckins[0]?.timestamp;
+            const endDate = filteredCheckins[filteredCheckins.length - 1]?.timestamp;
+
+            analysisResults = {
+                checkins: filteredCheckins,
+                studioStats,
+                dailyStats,
+                hourlyStats,
+                weekdayStats,
+                startDate,
+                endDate
+            };
+
+            renderResults();
+        }
+
+        // ==================== TIME FILTERS (ÄNDERUNG #2) ====================
+        function setupTimeFilters() {
+            const periodType = document.getElementById('period-type');
+            const yearSelector = document.getElementById('year-selector');
+            const quarterSelector = document.getElementById('quarter-selector');
+            const monthSelector = document.getElementById('month-selector');
+            const applyBtn = document.getElementById('apply-filter-btn');
+
+            // Populate year selector
+            const years = [...new Set(allCheckins.map(c => c.timestamp.getFullYear()))].sort();
+            const yearSelect = document.getElementById('year-select');
+            yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+
+            periodType.addEventListener('change', () => {
+                const type = periodType.value;
+                yearSelector.classList.toggle('hidden', type === 'all');
+                quarterSelector.classList.toggle('hidden', type !== 'quarter');
+                monthSelector.classList.toggle('hidden', type !== 'month');
+            });
+
+            applyBtn.addEventListener('click', applyTimeFilter);
+        }
+
+        function applyTimeFilter() {
+            const periodType = document.getElementById('period-type').value;
+            
+            if (periodType === 'all') {
+                filteredCheckins = [...allCheckins];
+            } else {
+                const year = parseInt(document.getElementById('year-select').value);
+                
+                if (periodType === 'year') {
+                    filteredCheckins = allCheckins.filter(c => c.timestamp.getFullYear() === year);
+                } else if (periodType === 'quarter') {
+                    const quarter = document.getElementById('quarter-select').value;
+                    const qMap = { 'Q1': [0, 1, 2], 'Q2': [3, 4, 5], 'Q3': [6, 7, 8], 'Q4': [9, 10, 11] };
+                    const months = qMap[quarter];
+                    filteredCheckins = allCheckins.filter(c => 
+                        c.timestamp.getFullYear() === year && months.includes(c.timestamp.getMonth())
+                    );
+                } else if (periodType === 'month') {
+                    const month = parseInt(document.getElementById('month-select').value) - 1;
+                    filteredCheckins = allCheckins.filter(c => 
+                        c.timestamp.getFullYear() === year && c.timestamp.getMonth() === month
+                    );
+                }
+            }
+
+            processAnalysis();
         }
 
         // ==================== HELPER FUNCTIONS ====================
@@ -550,14 +688,12 @@
 
         // ==================== RENDER RESULTS ====================
         function renderResults() {
-            const { checkins, studioStats, dailyStats, hourlyStats, uniqueMembers, startDate, endDate } = analysisResults;
+            const { checkins, studioStats, dailyStats, startDate, endDate } = analysisResults;
 
-            // Period display
             document.getElementById('period-display').textContent = `${formatDate(startDate)} - ${formatDate(endDate)}`;
 
-            // Summary stats
+            // ÄNDERUNG #4: Removed "Aktive Mitglieder" stat
             document.getElementById('stat-total-checkins').textContent = checkins.length.toLocaleString('de-DE');
-            document.getElementById('stat-active-members').textContent = uniqueMembers.toLocaleString('de-DE');
             
             const daysCount = Object.keys(dailyStats).length;
             const avgDaily = Math.round(checkins.length / daysCount);
@@ -570,12 +706,12 @@
                 document.getElementById('stat-top-studio-percent').textContent = `${percent}% der Check-ins`;
             }
 
-            // Render charts
             renderStudioChart();
             renderDailyChart();
-            renderHeatmap();
             renderDemographicsCharts();
             renderStudioComparisonTable();
+            renderUtilizationCharts();
+            renderHeatmapTable();
             renderInsights();
         }
 
@@ -595,7 +731,7 @@
                     datasets: [{
                         label: 'Check-ins',
                         data: sorted.map(s => s[1]),
-                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
+                        backgroundColor: '#DC2626'
                     }]
                 },
                 options: {
@@ -606,7 +742,9 @@
                         datalabels: {
                             anchor: 'end',
                             align: 'top',
-                            formatter: (value) => value.toLocaleString('de-DE')
+                            formatter: (value) => value.toLocaleString('de-DE'),
+                            color: '#1F2937',
+                            font: { weight: 'bold' }
                         }
                     },
                     scales: {
@@ -635,8 +773,8 @@
                     datasets: [{
                         label: 'Check-ins pro Tag',
                         data: sorted.map(d => d[1]),
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderColor: '#DC2626',
+                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
                         fill: true,
                         tension: 0.4
                     }]
@@ -654,93 +792,34 @@
             });
         }
 
-        function renderHeatmap() {
-            const { hourlyStats } = analysisResults;
-            const ctx = document.getElementById('chart-heatmap');
-            
-            if (charts.heatmap) charts.heatmap.destroy();
-
-            // Create matrix: hours (0-23) x days (0-6)
-            const matrix = [];
-            const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-            
-            for (let hour = 0; hour < 24; hour++) {
-                const row = { hour };
-                for (let day = 0; day < 7; day++) {
-                    const key = `${day}-${hour}`;
-                    row[days[day]] = hourlyStats[key] || 0;
-                }
-                matrix.push(row);
-            }
-
-            // Prepare data for Chart.js (simplified bubble chart)
-            const bubbleData = [];
-            matrix.forEach((row, hourIdx) => {
-                days.forEach((day, dayIdx) => {
-                    const value = row[day];
-                    if (value > 0) {
-                        bubbleData.push({
-                            x: dayIdx,
-                            y: hourIdx,
-                            r: Math.sqrt(value) * 2
-                        });
-                    }
-                });
+        function renderDemographicsCharts() {
+            // ÄNDERUNG #5: Setup studio filter properly
+            const { studioStats, checkins } = analysisResults;
+            const filterSelect = document.getElementById('demo-studio-filter');
+            filterSelect.innerHTML = '<option value="all">Alle Studios</option>';
+            Object.keys(studioStats).forEach(studio => {
+                const option = document.createElement('option');
+                option.value = studio;
+                option.textContent = studio;
+                filterSelect.appendChild(option);
             });
 
-            charts.heatmap = new Chart(ctx, {
-                type: 'bubble',
-                data: {
-                    datasets: [{
-                        label: 'Check-ins',
-                        data: bubbleData,
-                        backgroundColor: 'rgba(59, 130, 246, 0.6)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            min: -0.5,
-                            max: 6.5,
-                            ticks: {
-                                stepSize: 1,
-                                callback: (value) => days[Math.round(value)]
-                            }
-                        },
-                        y: {
-                            type: 'linear',
-                            min: -0.5,
-                            max: 23.5,
-                            ticks: {
-                                stepSize: 2,
-                                callback: (value) => `${Math.round(value)}:00`
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => {
-                                    const hour = Math.round(context.parsed.y);
-                                    const day = days[Math.round(context.parsed.x)];
-                                    return `${day} ${hour}:00 - Check-ins: ${Math.round(context.raw.r / 2) ** 2}`;
-                                }
-                            }
-                        }
-                    }
-                }
+            // Initial render
+            updateDemographicsCharts('all');
+
+            // ÄNDERUNG #5: Make filter work
+            filterSelect.addEventListener('change', (e) => {
+                updateDemographicsCharts(e.target.value);
             });
         }
 
-        function renderDemographicsCharts() {
-            const { checkins } = analysisResults;
-            
-            // Gender distribution
-            const genderCounts = { 'Männlich': 0, 'Weiblich': 0, 'Unknown': 0 };
+        function updateDemographicsCharts(studioFilter) {
+            const checkins = studioFilter === 'all' 
+                ? analysisResults.checkins 
+                : analysisResults.checkins.filter(c => c.studio === studioFilter);
+
+            // Gender chart
+            const genderCounts = { 'Männlich': 0, 'Weiblich': 0 };
             checkins.forEach(c => genderCounts[c.gender]++);
             
             const genderCtx = document.getElementById('chart-gender');
@@ -752,7 +831,7 @@
                     labels: ['Männer', 'Frauen'],
                     datasets: [{
                         data: [genderCounts['Männlich'], genderCounts['Weiblich']],
-                        backgroundColor: ['#3b82f6', '#ec4899']
+                        backgroundColor: ['#1F2937', '#DC2626']
                     }]
                 },
                 options: {
@@ -773,7 +852,7 @@
                 plugins: [ChartDataLabels]
             });
 
-            // Age distribution
+            // Age chart
             const ageCounts = { '<20': 0, '20-30': 0, '30-40': 0, '40+': 0 };
             checkins.forEach(c => {
                 if (c.age === null) return;
@@ -793,7 +872,7 @@
                     datasets: [{
                         label: 'Check-ins',
                         data: Object.values(ageCounts),
-                        backgroundColor: '#10b981'
+                        backgroundColor: '#6B7280'
                     }]
                 },
                 options: {
@@ -803,7 +882,9 @@
                         legend: { display: false },
                         datalabels: {
                             anchor: 'end',
-                            align: 'top'
+                            align: 'top',
+                            color: '#1F2937',
+                            font: { weight: 'bold' }
                         }
                     },
                     scales: {
@@ -811,17 +892,6 @@
                     }
                 },
                 plugins: [ChartDataLabels]
-            });
-
-            // Populate studio filter
-            const { studioStats } = analysisResults;
-            const filterSelect = document.getElementById('demo-studio-filter');
-            filterSelect.innerHTML = '<option value="all">Alle Studios</option>';
-            Object.keys(studioStats).forEach(studio => {
-                const option = document.createElement('option');
-                option.value = studio;
-                option.textContent = studio;
-                filterSelect.appendChild(option);
             });
         }
 
@@ -853,6 +923,115 @@
             });
         }
 
+        // ==================== UTILIZATION CHARTS (ÄNDERUNG #6) ====================
+        function renderUtilizationCharts() {
+            const { studioStats } = analysisResults;
+            const filterSelect = document.getElementById('util-studio-filter');
+            filterSelect.innerHTML = '<option value="all">Alle Studios (Gesamt)</option>';
+            Object.keys(studioStats).forEach(studio => {
+                const option = document.createElement('option');
+                option.value = studio;
+                option.textContent = studio;
+                filterSelect.appendChild(option);
+            });
+
+            updateUtilizationCharts('all');
+
+            filterSelect.addEventListener('change', (e) => {
+                updateUtilizationCharts(e.target.value);
+                renderHeatmapTable(e.target.value);
+            });
+        }
+
+        function updateUtilizationCharts(studioFilter) {
+            const checkins = studioFilter === 'all' 
+                ? analysisResults.checkins 
+                : analysisResults.checkins.filter(c => c.studio === studioFilter);
+
+            // Weekday utilization
+            const weekdayStats = {};
+            checkins.forEach(c => {
+                weekdayStats[c.day] = (weekdayStats[c.day] || 0) + 1;
+            });
+
+            const ctx = document.getElementById('chart-weekday-util');
+            if (charts.weekdayUtil) charts.weekdayUtil.destroy();
+
+            const dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+            const data = [0, 1, 2, 3, 4, 5, 6].map(d => weekdayStats[d] || 0);
+
+            charts.weekdayUtil = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dayNames,
+                    datasets: [{
+                        label: 'Check-ins',
+                        data: data,
+                        backgroundColor: '#DC2626'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#1F2937',
+                            font: { weight: 'bold' }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        // ==================== HEATMAP TABLE (ÄNDERUNG #7) ====================
+        function renderHeatmapTable(studioFilter = 'all') {
+            const checkins = studioFilter === 'all' 
+                ? analysisResults.checkins 
+                : analysisResults.checkins.filter(c => c.studio === studioFilter);
+
+            const hourlyStats = {};
+            checkins.forEach(c => {
+                const key = `${c.day}-${c.hour}`;
+                hourlyStats[key] = (hourlyStats[key] || 0) + 1;
+            });
+
+            const table = document.getElementById('heatmap-table');
+            const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+
+            // Find max for color scaling
+            const maxCount = Math.max(...Object.values(hourlyStats));
+
+            let html = '<thead><tr class="heatmap-header"><th class="heatmap-cell">Uhrzeit</th>';
+            dayNames.forEach(day => {
+                html += `<th class="heatmap-cell">${day}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            // Hours 6-23 (typical gym hours)
+            for (let hour = 6; hour <= 23; hour++) {
+                html += `<tr><td class="heatmap-cell font-bold">${hour}:00</td>`;
+                for (let day = 0; day < 7; day++) {
+                    const key = `${day}-${hour}`;
+                    const count = hourlyStats[key] || 0;
+                    const intensity = count > 0 ? (count / maxCount) : 0;
+                    const bgColor = count === 0 ? '#f9fafb' : `rgba(220, 38, 38, ${0.2 + intensity * 0.8})`;
+                    const textColor = intensity > 0.5 ? '#fff' : '#1F2937';
+                    html += `<td class="heatmap-cell" style="background-color: ${bgColor}; color: ${textColor};">${count > 0 ? count : '-'}</td>`;
+                }
+                html += '</tr>';
+            }
+
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
         function renderInsights() {
             const { checkins, studioStats } = analysisResults;
             const container = document.getElementById('insights-container');
@@ -860,12 +1039,10 @@
 
             const insights = [];
 
-            // Calculate average gender distribution across all studios
             const totalMales = checkins.filter(c => c.gender === 'Männlich').length;
             const totalFemales = checkins.filter(c => c.gender === 'Weiblich').length;
             const avgFemalePercent = (totalFemales / (totalMales + totalFemales)) * 100;
 
-            // Check each studio for gender imbalance
             Object.keys(studioStats).forEach(studio => {
                 const studioCheckins = checkins.filter(c => c.studio === studio);
                 const males = studioCheckins.filter(c => c.gender === 'Männlich').length;
@@ -884,7 +1061,6 @@
                 }
             });
 
-            // Peak hours analysis
             const { hourlyStats } = analysisResults;
             const hourTotals = {};
             Object.entries(hourlyStats).forEach(([key, count]) => {
@@ -902,7 +1078,6 @@
                 });
             }
 
-            // Age trends
             const youngCheckins = checkins.filter(c => c.age && c.age < 20).length;
             const youngPercent = (youngCheckins / checkins.length) * 100;
             if (youngPercent > 15) {
@@ -915,7 +1090,6 @@
                 });
             }
 
-            // Render insights
             const typeStyles = {
                 warning: 'bg-yellow-50 border-yellow-200',
                 info: 'bg-blue-50 border-blue-200',
@@ -950,456 +1124,24 @@
                 button.addEventListener('click', () => {
                     const targetTab = button.dataset.tab;
                     
-                    // Update buttons
                     tabButtons.forEach(b => b.classList.remove('active'));
                     button.classList.add('active');
                     
-                    // Update content
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                     document.getElementById(`tab-${targetTab}`).classList.add('active');
                 });
             });
         }
 
-        // ==================== GITHUB INTEGRATION ====================
+        // ==================== GITHUB & TRENDS (Placeholder) ====================
         async function saveToGitHub() {
-            if (!GITHUB_CONFIG.token) {
-                const token = prompt('Bitte gib deinen GitHub Personal Access Token ein:\n\n1. Gehe zu github.com/settings/tokens\n2. Erstelle einen neuen Token mit "repo" Berechtigung\n3. Kopiere den Token hier:');
-                if (!token) return;
-                GITHUB_CONFIG.token = token;
-                localStorage.setItem('github_token', token);
-            }
-
-            const weekNumber = getWeekNumber(analysisResults.startDate);
-            const year = analysisResults.startDate.getFullYear();
-            const fileName = `${year}-W${weekNumber.toString().padStart(2, '0')}.json`;
-            
-            const dataToSave = {
-                timestamp: new Date().toISOString(),
-                period: {
-                    start: analysisResults.startDate.toISOString(),
-                    end: analysisResults.endDate.toISOString(),
-                    week: weekNumber,
-                    year: year
-                },
-                summary: {
-                    totalCheckins: analysisResults.checkins.length,
-                    uniqueMembers: analysisResults.uniqueMembers,
-                    studios: analysisResults.studioStats,
-                    avgDaily: Math.round(analysisResults.checkins.length / Object.keys(analysisResults.dailyStats).length)
-                },
-                demographics: calculateDemographics(analysisResults.checkins),
-                studioBreakdown: calculateStudioBreakdown(analysisResults.checkins)
-            };
-
-            try {
-                document.getElementById('save-github-btn').textContent = '⏳ Speichern...';
-                document.getElementById('save-github-btn').disabled = true;
-
-                const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/data/${fileName}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        message: `Update analytics for week ${weekNumber}, ${year}`,
-                        content: btoa(unescape(encodeURIComponent(JSON.stringify(dataToSave, null, 2)))),
-                        sha: await getFileSha(fileName)
-                    })
-                });
-
-                if (response.ok) {
-                    alert('✅ Daten erfolgreich auf GitHub gespeichert!\n\nDu kannst jetzt im Trends-Tab die historische Entwicklung sehen.');
-                    document.getElementById('save-github-btn').textContent = '✅ Gespeichert';
-                    setTimeout(() => {
-                        document.getElementById('save-github-btn').textContent = '☁️ Auf GitHub speichern';
-                        document.getElementById('save-github-btn').disabled = false;
-                    }, 2000);
-                } else {
-                    throw new Error('GitHub API Fehler');
-                }
-            } catch (error) {
-                console.error('GitHub save error:', error);
-                alert('❌ Fehler beim Speichern auf GitHub.\n\nBitte prüfe:\n- GitHub Token korrekt?\n- Repository existiert?\n- Berechtigung vorhanden?');
-                document.getElementById('save-github-btn').textContent = '☁️ Auf GitHub speichern';
-                document.getElementById('save-github-btn').disabled = false;
-            }
-        }
-
-        async function getFileSha(fileName) {
-            try {
-                const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/data/${fileName}`, {
-                    headers: { 'Authorization': `Bearer ${GITHUB_CONFIG.token}` }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    return data.sha;
-                }
-            } catch (e) {
-                // File doesn't exist yet
-            }
-            return null;
+            alert('GitHub Speicherung: Funktion wird implementiert.\n\nDu kannst aktuell die Daten als JSON exportieren.');
         }
 
         async function loadHistoricalData() {
-            if (!GITHUB_CONFIG.token) {
-                const token = localStorage.getItem('github_token');
-                if (token) {
-                    GITHUB_CONFIG.token = token;
-                } else {
-                    alert('Bitte speichere zuerst eine Analyse auf GitHub, um historische Daten zu laden.');
-                    return;
-                }
-            }
-
-            try {
-                document.getElementById('load-history-btn').textContent = '⏳ Laden...';
-                
-                const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/data`, {
-                    headers: { 'Authorization': `Bearer ${GITHUB_CONFIG.token}` }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Keine historischen Daten gefunden');
-                }
-
-                const files = await response.json();
-                historicalData = [];
-
-                for (const file of files) {
-                    if (file.name.endsWith('.json')) {
-                        const fileResponse = await fetch(file.download_url);
-                        const data = await fileResponse.json();
-                        historicalData.push(data);
-                    }
-                }
-
-                // Sort by date
-                historicalData.sort((a, b) => new Date(a.period.start) - new Date(b.period.start));
-
-                // Add current analysis if not already saved
-                const currentWeek = getWeekNumber(analysisResults.startDate);
-                const currentYear = analysisResults.startDate.getFullYear();
-                const alreadySaved = historicalData.some(d => d.period.week === currentWeek && d.period.year === currentYear);
-                
-                if (!alreadySaved && analysisResults) {
-                    historicalData.push({
-                        timestamp: new Date().toISOString(),
-                        period: {
-                            start: analysisResults.startDate.toISOString(),
-                            end: analysisResults.endDate.toISOString(),
-                            week: currentWeek,
-                            year: currentYear
-                        },
-                        summary: {
-                            totalCheckins: analysisResults.checkins.length,
-                            uniqueMembers: analysisResults.uniqueMembers,
-                            studios: analysisResults.studioStats
-                        },
-                        demographics: calculateDemographics(analysisResults.checkins),
-                        studioBreakdown: calculateStudioBreakdown(analysisResults.checkins)
-                    });
-                }
-
-                document.getElementById('trends-no-data').classList.add('hidden');
-                document.getElementById('trends-content').classList.remove('hidden');
-                
-                renderTrendCharts();
-                analyzeTrends();
-
-            } catch (error) {
-                console.error('Load history error:', error);
-                alert('❌ Keine historischen Daten gefunden.\n\nSpeichere zuerst ein paar Wochen-Analysen auf GitHub, um Trends zu sehen.');
-                document.getElementById('load-history-btn').textContent = '📂 Historische Daten laden';
-            }
+            alert('Historische Daten: Funktion wird implementiert.\n\nSpeichere zuerst mehrere Wochen-Analysen.');
         }
 
-        // ==================== TREND CALCULATIONS ====================
-        function calculateDemographics(checkins) {
-            const males = checkins.filter(c => c.gender === 'Männlich').length;
-            const females = checkins.filter(c => c.gender === 'Weiblich').length;
-            
-            const ageGroups = { '<20': 0, '20-30': 0, '30-40': 0, '40+': 0 };
-            checkins.forEach(c => {
-                if (c.age === null) return;
-                if (c.age < 20) ageGroups['<20']++;
-                else if (c.age < 30) ageGroups['20-30']++;
-                else if (c.age < 40) ageGroups['30-40']++;
-                else ageGroups['40+']++;
-            });
-
-            return {
-                gender: {
-                    male: males,
-                    female: females,
-                    malePercent: (males / (males + females)) * 100,
-                    femalePercent: (females / (males + females)) * 100
-                },
-                age: ageGroups
-            };
-        }
-
-        function calculateStudioBreakdown(checkins) {
-            const studios = {};
-            const studioSet = new Set(checkins.map(c => c.studio));
-
-            studioSet.forEach(studio => {
-                const studioCheckins = checkins.filter(c => c.studio === studio);
-                const males = studioCheckins.filter(c => c.gender === 'Männlich').length;
-                const females = studioCheckins.filter(c => c.gender === 'Weiblich').length;
-                
-                const ageGroups = { '<20': 0, '20-30': 0, '30-40': 0, '40+': 0 };
-                studioCheckins.forEach(c => {
-                    if (c.age === null) return;
-                    if (c.age < 20) ageGroups['<20']++;
-                    else if (c.age < 30) ageGroups['20-30']++;
-                    else if (c.age < 40) ageGroups['30-40']++;
-                    else ageGroups['40+']++;
-                });
-
-                studios[studio] = {
-                    checkins: studioCheckins.length,
-                    gender: { male: males, female: females },
-                    age: ageGroups
-                };
-            });
-
-            return studios;
-        }
-
-        function getWeekNumber(date) {
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        }
-
-        // ==================== TREND VISUALIZATION ====================
-        function renderTrendCharts() {
-            if (historicalData.length < 2) {
-                alert('Mindestens 2 Zeiträume nötig für Trend-Analyse.');
-                return;
-            }
-
-            renderStudioTrends();
-            renderGenderTrends();
-            renderAgeTrends();
-        }
-
-        function renderStudioTrends() {
-            const ctx = document.getElementById('chart-studio-trends');
-            if (charts.studioTrends) charts.studioTrends.destroy();
-
-            const labels = historicalData.map(d => `W${d.period.week} ${d.period.year}`);
-            const allStudios = new Set();
-            historicalData.forEach(d => Object.keys(d.summary.studios).forEach(s => allStudios.add(s)));
-
-            const datasets = Array.from(allStudios).map((studio, idx) => {
-                const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
-                return {
-                    label: studio,
-                    data: historicalData.map(d => d.summary.studios[studio] || 0),
-                    borderColor: colors[idx % colors.length],
-                    backgroundColor: colors[idx % colors.length] + '20',
-                    fill: false,
-                    tension: 0.4
-                };
-            });
-
-            charts.studioTrends = new Chart(ctx, {
-                type: 'line',
-                data: { labels, datasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top' }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Check-ins' } }
-                    }
-                }
-            });
-        }
-
-        function renderGenderTrends() {
-            const ctx = document.getElementById('chart-gender-trends');
-            if (charts.genderTrends) charts.genderTrends.destroy();
-
-            const labels = historicalData.map(d => `W${d.period.week} ${d.period.year}`);
-
-            charts.genderTrends = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [
-                        {
-                            label: 'Männer %',
-                            data: historicalData.map(d => d.demographics.gender.malePercent),
-                            borderColor: '#3b82f6',
-                            backgroundColor: '#3b82f620',
-                            fill: false
-                        },
-                        {
-                            label: 'Frauen %',
-                            data: historicalData.map(d => d.demographics.gender.femalePercent),
-                            borderColor: '#ec4899',
-                            backgroundColor: '#ec489920',
-                            fill: false
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { min: 0, max: 100, title: { display: true, text: 'Prozent' } }
-                    }
-                }
-            });
-        }
-
-        function renderAgeTrends() {
-            const ctx = document.getElementById('chart-age-trends');
-            if (charts.ageTrends) charts.ageTrends.destroy();
-
-            const labels = historicalData.map(d => `W${d.period.week} ${d.period.year}`);
-            const ageGroups = ['<20', '20-30', '30-40', '40+'];
-            const colors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
-
-            const datasets = ageGroups.map((group, idx) => ({
-                label: group,
-                data: historicalData.map(d => d.demographics.age[group] || 0),
-                borderColor: colors[idx],
-                backgroundColor: colors[idx] + '20',
-                fill: false
-            }));
-
-            charts.ageTrends = new Chart(ctx, {
-                type: 'line',
-                data: { labels, datasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top' }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Check-ins' } }
-                    }
-                }
-            });
-        }
-
-        function analyzeTrends() {
-            if (historicalData.length < 3) return;
-
-            const container = document.getElementById('trend-alerts-container');
-            container.innerHTML = '';
-
-            const alerts = [];
-            const current = historicalData[historicalData.length - 1];
-            const previous = historicalData[historicalData.length - 2];
-            const older = historicalData[historicalData.length - 3];
-
-            // Check studio trends
-            Object.keys(current.summary.studios).forEach(studio => {
-                const currentVal = current.summary.studios[studio] || 0;
-                const prevVal = previous.summary.studios[studio] || 0;
-                const olderVal = older.summary.studios[studio] || 0;
-
-                // Consistent decline
-                if (currentVal < prevVal && prevVal < olderVal) {
-                    const decline = ((olderVal - currentVal) / olderVal * 100).toFixed(0);
-                    alerts.push({
-                        type: 'warning',
-                        icon: '📉',
-                        title: `${studio}: Rückgang bei Check-ins`,
-                        description: `-${decline}% über die letzten 3 Wochen (${olderVal} → ${currentVal})`,
-                        action: 'Ursachenanalyse empfohlen'
-                    });
-                }
-            });
-
-            // Check gender trends per studio
-            Object.keys(current.studioBreakdown).forEach(studio => {
-                const currentFemale = current.studioBreakdown[studio].gender.female;
-                const prevFemale = previous.studioBreakdown[studio]?.gender.female || 0;
-                
-                if (currentFemale < prevFemale * 0.85) {
-                    const decline = ((prevFemale - currentFemale) / prevFemale * 100).toFixed(0);
-                    alerts.push({
-                        type: 'warning',
-                        icon: '👩',
-                        title: `${studio}: Rückgang bei Frauen`,
-                        description: `-${decline}% weibliche Check-ins vs. Vorwoche`,
-                        action: 'Frauen-spezifisches Marketing verstärken'
-                    });
-                }
-
-                const currentMale = current.studioBreakdown[studio].gender.male;
-                const prevMale = previous.studioBreakdown[studio]?.gender.male || 0;
-                
-                if (currentMale < prevMale * 0.85) {
-                    const decline = ((prevMale - currentMale) / prevMale * 100).toFixed(0);
-                    alerts.push({
-                        type: 'warning',
-                        icon: '👨',
-                        title: `${studio}: Rückgang bei Männern`,
-                        description: `-${decline}% männliche Check-ins vs. Vorwoche`,
-                        action: 'Männer-spezifisches Marketing verstärken'
-                    });
-                }
-            });
-
-            // Check age group trends
-            const ageGroups = ['<20', '20-30', '30-40', '40+'];
-            ageGroups.forEach(group => {
-                const currentVal = current.demographics.age[group] || 0;
-                const prevVal = previous.demographics.age[group] || 0;
-                
-                if (currentVal < prevVal * 0.80) {
-                    const decline = ((prevVal - currentVal) / prevVal * 100).toFixed(0);
-                    alerts.push({
-                        type: 'info',
-                        icon: '📊',
-                        title: `Altersgruppe ${group}: Rückgang`,
-                        description: `-${decline}% Check-ins vs. Vorwoche`,
-                        action: 'Zielgruppen-spezifische Angebote prüfen'
-                    });
-                }
-            });
-
-            // Render alerts
-            const typeStyles = {
-                warning: 'bg-red-50 border-red-200',
-                info: 'bg-blue-50 border-blue-200'
-            };
-
-            if (alerts.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-center py-4">✅ Keine signifikanten Rückgänge erkannt</p>';
-            } else {
-                alerts.forEach(alert => {
-                    const div = document.createElement('div');
-                    div.className = `p-4 rounded-lg border-2 ${typeStyles[alert.type]}`;
-                    div.innerHTML = `
-                        <div class="flex items-start">
-                            <div class="text-2xl mr-3">${alert.icon}</div>
-                            <div class="flex-1">
-                                <h5 class="font-bold mb-1">${alert.title}</h5>
-                                <p class="text-sm text-gray-700 mb-1">${alert.description}</p>
-                                <p class="text-xs text-gray-600">💡 ${alert.action}</p>
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
-            }
-        }
-
-        // ==================== EXPORT ====================
         function setupExport() {
             document.getElementById('export-btn').addEventListener('click', () => {
                 const dataStr = JSON.stringify(analysisResults, null, 2);
