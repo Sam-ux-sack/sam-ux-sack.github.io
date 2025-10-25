@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- v5.6: Titel -->
-    <title>SAMS GYM Analytics Dashboard v5.6</title>
+    <!-- v5.7: Trim-Fix für GitHub Sync -->
+    <title>SAMS GYM Analytics Dashboard v5.7</title>
     
     <meta name="theme-color" content="#DC2626">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -133,8 +133,8 @@
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
                 <div>
                     <h1 class="text-3xl font-bold" style="color: #DC2626;">
-                        <!-- v5.6: Titel -->
-                        🏋️ SAMS GYM Analytics v5.6
+                        <!-- v5.7: Titel -->
+                        🏋️ SAMS GYM Analytics v5.7
                     </h1>
                     <p class="text-sm text-gray-600 mt-1">
                         Analyse-Zeitraum: <span id="period-display" class="font-medium">-</span>
@@ -418,7 +418,6 @@
                                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Check-ins</th>
                                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Männer</th>
                                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Frauen</th>
-                                            <!-- v5.6: Unbekannt entfernt -->
                                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Ø Alter</th>
                                         </tr>
                                     </thead>
@@ -2429,10 +2428,11 @@
             document.getElementById('github-save-btn').addEventListener('click', saveToGitHub);
         }
         
+        // v5.7: .trim() hinzugefügt, um Leerzeichen-Fehler zu vermeiden
         function updateGitHubConfig() {
-            githubConfig.owner = document.getElementById('github-owner').value;
-            githubConfig.repo = document.getElementById('github-repo').value;
-            githubConfig.token = document.getElementById('github-token').value;
+            githubConfig.owner = document.getElementById('github-owner').value.trim();
+            githubConfig.repo = document.getElementById('github-repo').value.trim();
+            githubConfig.token = document.getElementById('github-token').value.trim();
             
             localStorage.setItem('githubConfig', JSON.stringify({
                 owner: githubConfig.owner,
