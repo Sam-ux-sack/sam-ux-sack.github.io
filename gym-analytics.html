@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- v5.11: GitHub Load/Save SHA Fix -->
-    <title>SAMS GYM Analytics Dashboard v5.11</title>
+    <title>SAMS GYM Analytics Dashboard v5.12</title>
     
     <meta name="theme-color" content="#DC2626">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -128,13 +127,11 @@
 <body class="bg-gray-100 text-gray-900">
 
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
-        <!-- Header -->
         <header class="mb-8">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
                 <div>
                     <h1 class="text-3xl font-bold" style="color: #DC2626;">
-                        <!-- v5.11: Titel -->
-                        🏋️ SAMS GYM Analytics v5.11
+                        🏋️ SAMS GYM Analytics v5.12
                     </h1>
                     <p class="text-sm text-gray-600 mt-1">
                         Analyse-Zeitraum: <span id="period-display" class="font-medium">-</span>
@@ -156,7 +153,6 @@
                 </div>
             </div>
 
-            <!-- Time Period Filter -->
             <div id="time-filter-section" class="hidden bg-white p-4 rounded-xl shadow-md mb-4">
                 <div class="flex flex-wrap items-center gap-4">
                     <div>
@@ -208,7 +204,6 @@
             </div>
         </header>
 
-        <!-- Initial Load Section -->
         <div id="initial-load-section" class="bg-white p-8 rounded-xl shadow-md mb-8 text-center">
             <div class="mb-6">
                 <div class="text-6xl mb-4">🏋️</div>
@@ -231,7 +226,6 @@
             </div>
         </div>
 
-        <!-- Upload Section -->
         <div id="upload-section" class="hidden bg-white p-6 rounded-xl shadow-md mb-8">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-bold">📁 Daten hochladen</h2>
@@ -249,7 +243,6 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Zoho Contacts Upload -->
                 <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-red-600 transition cursor-pointer" id="contacts-drop-zone">
                     <input type="file" id="contacts-input" accept=".csv" class="hidden">
                     <div class="text-gray-600">
@@ -265,7 +258,6 @@
                     </div>
                 </div>
 
-                <!-- SALTO Events Upload -->
                 <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-red-600 transition cursor-pointer" id="events-drop-zone">
                     <input type="file" id="events-input" accept=".csv" class="hidden">
                     <div class="text-gray-600">
@@ -292,10 +284,8 @@
             </div>
         </div>
 
-        <!-- Results Section -->
         <div id="results-section" class="hidden">
             
-            <!-- Summary Stats -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div class="stat-card bg-white p-6 rounded-xl shadow-md">
                     <div class="flex items-center justify-between">
@@ -331,7 +321,6 @@
                 </div>
             </div>
 
-            <!-- Tabs -->
             <div class="bg-white rounded-xl shadow-md overflow-hidden">
                 <div class="border-b border-gray-200">
                     <nav class="flex overflow-x-auto">
@@ -359,9 +348,7 @@
                     </nav>
                 </div>
 
-                <!-- Tab Content -->
                 <div class="p-6">
-                    <!-- Overview Tab -->
                     <div id="tab-overview" class="tab-content active">
                         <h3 class="text-xl font-bold mb-4">Studio-Auslastung</h3>
                         
@@ -382,7 +369,6 @@
                         </div>
                     </div>
 
-                    <!-- Demographics Tab -->
                     <div id="tab-demographics" class="tab-content">
                         <h3 class="text-xl font-bold mb-4">Mitglieder-Demographics</h3>
                         
@@ -436,7 +422,6 @@
                         </div>
                     </div>
 
-                    <!-- Utilization Tab -->
                     <div id="tab-utilization" class="tab-content">
                         <h3 class="text-xl font-bold mb-4">Auslastung nach Studio & Zeit</h3>
                         
@@ -466,7 +451,6 @@
                         </div>
                     </div>
 
-                    <!-- Trends Tab -->
                     <div id="tab-trends" class="tab-content">
                         <h3 class="text-xl font-bold mb-4">Monatliche Trend-Analyse</h3>
                         
@@ -487,7 +471,6 @@
                             </select>
                         </div>
 
-                        <!-- Total Check-ins Trend -->
                         <div class="bg-gray-50 p-4 rounded-lg mb-6">
                             <h4 class="font-semibold mb-3">📈 Check-ins pro Monat</h4>
                             <div class="chart-container">
@@ -495,7 +478,6 @@
                             </div>
                         </div>
 
-                        <!-- Gender Trends -->
                         <div class="bg-gray-50 p-4 rounded-lg mb-6">
                             <h4 class="font-semibold mb-3">👥 Männer vs. Frauen (monatlich)</h4>
                             <div class="chart-container">
@@ -503,7 +485,6 @@
                             </div>
                         </div>
 
-                        <!-- Male Age Groups Trend -->
                         <div class="bg-gray-50 p-4 rounded-lg mb-6">
                             <h4 class="font-semibold mb-3">👨 Männer nach Altersgruppen</h4>
                             <div class="chart-container">
@@ -511,7 +492,6 @@
                             </div>
                         </div>
 
-                        <!-- Female Age Groups Trend -->
                         <div class="bg-gray-50 p-4 rounded-lg mb-6">
                             <h4 class="font-semibold mb-3">👩 Frauen nach Altersgruppen</h4>
                             <div class="chart-container">
@@ -519,9 +499,7 @@
                             </div>
                         </div>
 
-                        <!-- Trend Alerts -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Positive Trends -->
                             <div class="bg-green-50 p-4 rounded-lg">
                                 <h4 class="font-semibold mb-3 text-green-800">📈 Positive Trends (Wachstum)</h4>
                                 <div id="trend-alerts-positive" class="space-y-3">
@@ -529,7 +507,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Negative Trends -->
                             <div class="bg-red-50 p-4 rounded-lg">
                                 <h4 class="font-semibold mb-3 text-red-800">📉 Negative Trends (Rückgang)</h4>
                                 <div id="trend-alerts-negative" class="space-y-3">
@@ -539,7 +516,6 @@
                         </div>
                     </div>
 
-                    <!-- Mitglieder-Tab -->
                     <div id="tab-members" class="tab-content">
                         <h3 class="text-xl font-bold mb-4">Top 20 Mitglieder</h3>
                         
@@ -556,13 +532,11 @@
                             <div class="bg-gray-50 p-4 rounded-lg">
                                 <h4 class="font-semibold mb-3 text-gray-800">🏆 Top 20 Mitglieder</h4>
                                 <div id="top-members-list" class="space-y-2">
-                                    <!-- JS füllt diesen Bereich -->
-                                </div>
+                                    </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Vergleichs-Tab -->
                     <div id="tab-compare" class="tab-content">
                         <h3 class="text-xl font-bold mb-4">Zeitraum-Vergleich</h3>
                         <p class="text-sm text-gray-600 mb-6">Wähle zwei Zeiträume und optional ein Studio aus, um die Kennzahlen zu vergleichen.</p>
@@ -571,13 +545,10 @@
                             <label class="block text-sm font-medium mb-2">Studio wählen (optional):</label>
                             <select id="compare-studio-filter" class="px-4 py-2 border border-gray-300 rounded-lg bg-white">
                                 <option value="all">Alle Studios (Gesamt)</option>
-                                <!-- Optionen werden per JS hinzugefügt -->
-                            </select>
+                                </select>
                         </div>
 
-                        <!-- Filter-Auswahl -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 p-4 bg-gray-50 rounded-lg">
-                            <!-- Zeitraum A -->
                             <div>
                                 <h4 class="font-semibold text-lg mb-3" style="color: #DC2626;">Zeitraum A (Basis)</h4>
                                 <div class="space-y-3">
@@ -611,7 +582,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Zeitraum B -->
                             <div>
                                 <h4 class="font-semibold text-lg mb-3 text-blue-600">Zeitraum B (Vergleich)</h4>
                                 <div class="space-y-3">
@@ -651,7 +621,6 @@
                             📊 Zeiträume vergleichen
                         </button>
 
-                        <!-- Vergleichs-Ergebnis -->
                         <div id="compare-results-container" class="hidden mt-8">
                             <h3 class="text-xl font-bold mb-4">Vergleichs-Ergebnis</h3>
                             <div class="overflow-x-auto bg-white rounded-lg shadow">
@@ -665,15 +634,13 @@
                                         </tr>
                                     </thead>
                                     <tbody id="compare-results-table" class="bg-white divide-y divide-gray-200">
-                                        <!-- JS füllt diesen Bereich -->
-                                    </tbody>
+                                        </tbody>
                                 </table>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-- Insights Tab -->
                     <div id="tab-insights" class="tab-content">
                         <h3 class="text-xl font-bold mb-4">Actionable Insights & Empfehlungen</h3>
                         <div id="insights-container" class="space-y-4">
@@ -684,7 +651,6 @@
         </div>
     </div>
 
-    <!-- Modals (Example, GitHub Sync) -->
     <div id="example-modal" class="modal">
         <div class="modal-content">
             <div class="flex items-center justify-between mb-4">
@@ -2269,6 +2235,7 @@
             }
         }
 
+        // *** KORRIGIERTE FUNKTION START ***
         async function loadFromGitHub() {
             updateGitHubConfig();
             setGitHubStatus('Lade Daten...');
@@ -2279,68 +2246,51 @@
                 return;
             }
 
-            // v5.11: Fetch the JSON descriptor to get content AND SHA in one call
             const url = `https://api.github.com/repos/${owner}/${repo}/contents/${dataFile}`;
             
             try {
                 const response = await fetch(url, {
                     headers: {
                         'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json' // Get JSON descriptor
+                        'Accept': 'application/vnd.github.v3+json'
                     }
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Fehler: ${response.status} ${response.statusText}`);
+                    // 404 Not Found ist ein spezifischer Fehler
+                    if (response.status === 404) {
+                        throw new Error(`Fehler 404: Datei '${dataFile}' nicht im Repo gefunden.`);
+                    }
+                    throw new Error(`API Fehler: ${response.status} ${response.statusText}`);
                 }
 
                 const fileData = await response.json();
-                
+                const sha = fileData.sha; // SHA immer speichern
+                let data;
+
                 if (fileData.content) {
-                    // Decode Base64 content
+                    // Fall 1: Datei < 1MB, Inhalt ist Base64
                     const rawJson = decodeURIComponent(escape(atob(fileData.content)));
-                    const data = JSON.parse(rawJson);
+                    data = JSON.parse(rawJson);
+                    processLoadedData(data, sha);
 
-                    if (data.allCheckins && data.monthlyTrends) {
-                        allCheckins = data.allCheckins || [];
-                        monthlyTrends = data.monthlyTrends || [];
-                        
-                        // v5.10 Fix: Re-hydrate Date objects
-                        allCheckins.forEach(c => {
-                            c.timestamp = new Date(c.timestamp);
-                        });
-                        
-                        if (allCheckins.length > 0) {
-                            lastEventDate = new Date(Math.max(...allCheckins.map(c => c.timestamp)));
-                        } else {
-                            lastEventDate = null;
+                } else if (fileData.download_url) {
+                    // Fall 2: Datei > 1MB, Inhalt ist null, nutze download_url
+                    setGitHubStatus('Große Datei (>1MB), lade über Download-URL...');
+                    const downloadResponse = await fetch(fileData.download_url, {
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/octet-stream'
                         }
-
-                        isLoadedFromGitHub = true;
-                        GITHUB_CONFIG.sha = fileData.sha; // v5.11: Store the SHA
-                        setGitHubStatus(`Geladen! (${allCheckins.length} Einträge)`);
-                        console.log('Load successful. SHA:', fileData.sha);
-
-                        // Process and render
-                        filteredCheckins = [...allCheckins];
-                        processAnalysis();
-                        setupTimeFilters();
-                        setupAllStudioFilters();
-                        setupCompareTab();
-                        
-                        document.getElementById('initial-load-section').classList.add('hidden');
-                        document.getElementById('initial-loading').classList.add('hidden');
-                        document.getElementById('results-section').classList.remove('hidden');
-                        document.getElementById('time-filter-section').classList.remove('hidden');
-                        document.getElementById('export-btn').classList.remove('hidden');
-                        document.getElementById('sync-github-btn').classList.remove('hidden');
-                        document.getElementById('add-data-btn').classList.remove('hidden');
-                        
-                        setTimeout(() => closeModal('github-sync-modal'), 1000);
-                    } else {
-                        setGitHubStatus('Fehler: Geladene Daten haben ein ungültiges Format.', true);
+                    });
+                    if (!downloadResponse.ok) {
+                        throw new Error(`Download-Fehler: ${downloadResponse.statusText}`);
                     }
+                    data = await downloadResponse.json();
+                    processLoadedData(data, sha);
+
                 } else {
+                    // Fall 3: Datei ist leer oder hat ein unbekanntes Format
                     setGitHubStatus('Fehler: Datei-Inhalt ist leer oder nicht gefunden.', true);
                 }
 
@@ -2348,112 +2298,54 @@
                 console.error('GitHub Load Error:', err);
                 setGitHubStatus(err.message, true);
                 document.getElementById('initial-loading').classList.add('hidden');
-                document.getElementById('initial-load-section').classList.remove('hidden');async function loadFromGitHub() {
-            updateGitHubConfig();
-            setGitHubStatus('Lade Daten...');
-            
-            const { owner, repo, token, dataFile } = GITHUB_CONFIG;
-            if (!owner || !repo || !token) {
-                setGitHubStatus('Fehler: Besitzer, Repo und Token sind erforderlich.', true);
-                return;
-            }
-
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${dataFile}`;
-            
-            try {
-                const response = await fetch(url, {
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Fehler: ${response.status} ${response.statusText}`);
-                }
-
-                const fileData = await response.json();
-                let rawJson; // Variable für den rohen JSON-Text
-
-                if (fileData.content) {
-                    // Fall 1: Datei < 1MB, Inhalt ist Base64-codiert
-                    console.log('Lade kleine Datei (Base64)...');
-                    rawJson = decodeURIComponent(escape(atob(fileData.content)));
-                
-                } else if (fileData.type === 'file' && fileData.download_url) {
-                    // Fall 2: Datei > 1MB, Inhalt muss via download_url geladen werden
-                    console.log('Lade große Datei (via download_url)...');
-                    setGitHubStatus('Große Datei wird geladen...');
-                    
-                    const downloadResponse = await fetch(fileData.download_url, {
-                        headers: { 'Authorization': `token ${token}` }
-                    });
-                    
-                    if (!downloadResponse.ok) {
-                        throw new Error(`Fehler beim Herunterladen der Datei: ${downloadResponse.statusText}`);
-                    }
-                    
-                    rawJson = await downloadResponse.text();
-                
-                } else if (Array.isArray(fileData)) {
-                    // Fall 3: Der Pfad ist ein Verzeichnis
-                     throw new Error(`Fehler: Der Pfad '${dataFile}' ist ein Verzeichnis, keine Datei.`);
-                
-                } else {
-                    // Fall 4: Weder Inhalt noch Download-URL gefunden
-f                  throw new Error('Fehler: Datei-Inhalt ist leer oder nicht gefunden.');
-                }
-
-                // Gemeinsame Verarbeitung (nachdem rawJson geladen wurde)
-                const data = JSON.parse(rawJson);
-
-                if (data.allCheckins && data.monthlyTrends) {
-                    allCheckins = data.allCheckins || [];
-                    monthlyTrends = data.monthlyTrends || [];
-                    
-                    // v5.10 Fix: Datums-Objekte wiederherstellen
-                    allCheckins.forEach(c => {
-                        c.timestamp = new Date(c.timestamp);
-                    });
-                    
-                    if (allCheckins.length > 0) {
-                        lastEventDate = new Date(Math.max(...allCheckins.map(c => c.timestamp)));
-                    } else {
-                        lastEventDate = null;
-                    }
-
-                    isLoadedFromGitHub = true;
-                    GITHUB_CONFIG.sha = fileData.sha; // SHA speichern (wichtig für nächstes Speichern)
-                    setGitHubStatus(`Geladen! (${allCheckins.length} Einträge)`);
-                    console.log('Load successful. SHA:', fileData.sha);
-
-                    // Verarbeiten und Rendern
-                    filteredCheckins = [...allCheckins];
-                    processAnalysis();
-                    setupTimeFilters();
-                    setupAllStudioFilters();
-                    setupCompareTab();
-                    
-            _       document.getElementById('initial-load-section').classList.add('hidden');
-                    document.getElementById('initial-loading').classList.add('hidden');
-                    document.getElementById('results-section').classList.remove('hidden');
-                    document.getElementById('time-filter-section').classList.remove('hidden');
-                    document.getElementById('export-btn').classList.remove('hidden');
-                    document.getElementById('sync-github-btn').classList.remove('hidden');
-                    document.getElementById('add-data-btn').classList.remove('hidden');
-                    
-                    setTimeout(() => closeModal('github-sync-modal'), 1000);
-                } else {
-                    setGitHubStatus('Fehler: Geladene Daten haben ein ungültiges Format.', true);
-                }
-                
-            } catch (err) {
-                console.error('GitHub Load Error:', err);
-                setGitHubStatus(err.message, true);
-                document.getElementById('initial-loading').classList.add('hidden');
-                document.getElementById('initial-load-
+                document.getElementById('initial-load-section').classList.remove('hidden');
             }
         }
+
+        // *** NEUE HILFSFUNKTION START ***
+        function processLoadedData(data, sha) {
+            if (data.allCheckins && data.monthlyTrends) {
+                allCheckins = data.allCheckins || [];
+                monthlyTrends = data.monthlyTrends || [];
+                
+                // v5.10 Fix: Re-hydrate Date objects
+                allCheckins.forEach(c => {
+                    c.timestamp = new Date(c.timestamp);
+                });
+                
+                if (allCheckins.length > 0) {
+                    lastEventDate = new Date(Math.max(...allCheckins.map(c => c.timestamp)));
+                } else {
+                    lastEventDate = null;
+                }
+
+                isLoadedFromGitHub = true;
+                GITHUB_CONFIG.sha = sha; // v5.11: Store the SHA
+                setGitHubStatus(`Geladen! (${allCheckins.length} Einträge)`);
+                console.log('Load successful. SHA:', sha);
+
+                // Process and render
+                filteredCheckins = [...allCheckins];
+                processAnalysis();
+                setupTimeFilters();
+                setupAllStudioFilters();
+                setupCompareTab();
+                
+                document.getElementById('initial-load-section').classList.add('hidden');
+                document.getElementById('initial-loading').classList.add('hidden');
+                document.getElementById('results-section').classList.remove('hidden');
+                document.getElementById('time-filter-section').classList.remove('hidden');
+                document.getElementById('export-btn').classList.remove('hidden');
+                document.getElementById('sync-github-btn').classList.remove('hidden');
+                document.getElementById('add-data-btn').classList.remove('hidden');
+                
+                setTimeout(() => closeModal('github-sync-modal'), 1000);
+            } else {
+                setGitHubStatus('Fehler: Geladene Daten haben ein ungültiges Format.', true);
+            }
+        }
+        // *** NEUE HILFSFUNKTION ENDE ***
+
 
         async function getFileSha() {
             // This function is now redundant as loadFromGitHub gets the SHA
