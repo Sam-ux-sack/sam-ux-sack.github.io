@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- v5.10: Load-from-GitHub Date parsing fix + Upload instructions -->
-    <title>SAMS GYM Analytics Dashboard v5.10</title>
+    <!-- v5.11: GitHub Load/Save SHA Fix -->
+    <title>SAMS GYM Analytics Dashboard v5.11</title>
     
     <meta name="theme-color" content="#DC2626">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -133,8 +133,8 @@
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
                 <div>
                     <h1 class="text-3xl font-bold" style="color: #DC2626;">
-                        <!-- v5.10: Titel -->
-                        🏋️ SAMS GYM Analytics v5.10
+                        <!-- v5.11: Titel -->
+                        🏋️ SAMS GYM Analytics v5.11
                     </h1>
                     <p class="text-sm text-gray-600 mt-1">
                         Analyse-Zeitraum: <span id="period-display" class="font-medium">-</span>
@@ -240,7 +240,6 @@
                 </button>
             </div>
             
-            <!-- v5.10: Upload Instructions -->
             <div id="upload-instructions" class="hidden mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
                 <h4 class="font-bold mb-2">💡 Wichtige Hinweise zum Hinzufügen von Daten:</h4>
                 <ul class="list-disc list-inside space-y-1">
@@ -917,7 +916,6 @@
             document.getElementById('add-data-btn').addEventListener('click', () => {
                 document.getElementById('results-section').classList.add('hidden');
                 document.getElementById('upload-section').classList.remove('hidden');
-                // v5.10: Show instructions if data is already loaded
                 if (allCheckins.length > 0) {
                     document.getElementById('upload-instructions').classList.remove('hidden');
                 }
@@ -1033,6 +1031,8 @@
             document.getElementById('analyze-btn').classList.add('hidden');
 
             setTimeout(() => {
+                // v5.10: Contact list is now a replacement, not a merge.
+                // It's used to lookup new events.
                 const contactsLookup = {};
                 contactsData.forEach(contact => {
                     const cusNumber = contact['Kundennummer'] || contact['CUSTOMER_ID'];
@@ -1050,6 +1050,7 @@
 
                 setTimeout(() => {
                     let newCheckins = 0;
+                    // v5.10: Use a Set for efficient duplicate checking
                     const existingCheckinTimestamps = new Set(allCheckins.map(c => c.timestamp.getTime()));
                     let latestDate = lastEventDate ? new Date(lastEventDate) : null;
 
@@ -1064,9 +1065,8 @@
                         if (!MAIN_DOORS[doorName]) return;
                         if (!cusNumber || !cusNumber.startsWith('CUS-')) return;
                         
-                        // v5.6: Filter out checkins with no matching contact
                         const contact = contactsLookup[cusNumber];
-                        if (!contact) return; 
+                        if (!contact) return; // Filter out checkins with no matching contact
 
                         const date = parseGermanDate(timestampStr);
                         if (!date) return;
@@ -1120,6 +1120,7 @@
 
                         setupTimeFilters();
                         setupAllStudioFilters();
+                        setupCompareTab(); // Init compare tab filters
                         renderAllCharts();
                         
                         // Reset upload form
@@ -1138,11 +1139,9 @@
         }
 
         // ==================== MONTHLY TRENDS GENERATION ====================
-        // v5.2: Optimized generation
         function generateMonthlyTrends() {
             const monthlyData = {};
 
-            // Helper to initialize a month/studio object
             const createStatsObject = () => {
                 const stats = {
                     total: 0,
@@ -1158,7 +1157,6 @@
                 return stats;
             };
 
-            // 1. Iterate through all checkins ONCE
             allCheckins.forEach(c => {
                 const year = c.timestamp.getFullYear();
                 const month = c.timestamp.getMonth();
@@ -1197,11 +1195,9 @@
                 }
             });
 
-            // 2. Convert to array, sort, and apply projection
             monthlyTrends = Object.keys(monthlyData).sort().map(key => {
                 const data = monthlyData[key];
                 
-                // Projection for incomplete months
                 const today = new Date();
                 const isCurrentMonth = data.year === today.getFullYear() && data.month === (today.getMonth() + 1);
                 let projectionFactor = 1.0;
@@ -1258,14 +1254,14 @@
                 studioStats[c.studio] = (studioStats[c.studio] || 0) + 1;
                 dailyStats[c.dateKey] = (dailyStats[c.dateKey] || 0) + 1;
                 
-                const hourKey = `${c.day}-${c.hour}`; // 0-Mo, 6-So
+                const hourKey = `${c.day}-${c.hour}`; // 0=Mo, 6=So
                 hourlyStats[hourKey] = (hourlyStats[hourKey] || 0) + 1;
                 
                 weekdayStats[c.day] = (weekdayStats[c.day] || 0) + 1;
             });
 
-            const startDate = filteredCheckins[0]?.timestamp;
-            const endDate = filteredCheckins[filteredCheckins.length - 1]?.timestamp;
+            const startDate = filteredCheckins.length > 0 ? filteredCheckins[0].timestamp : new Date();
+            const endDate = filteredCheckins.length > 0 ? filteredCheckins[filteredCheckins.length - 1].timestamp : new Date();
 
             analysisResults = {
                 checkins: filteredCheckins,
@@ -1384,7 +1380,7 @@
             const topStudio = Object.entries(studioStats).sort((a, b) => b[1] - a[1])[0];
             if (topStudio) {
                 document.getElementById('stat-top-studio').textContent = topStudio[0];
-                const percent = ((topStudio[1] / checkins.length) * 100).toFixed(0);
+                const percent = checkins.length > 0 ? ((topStudio[1] / checkins.length) * 100).toFixed(0) : 0;
                 document.getElementById('stat-top-studio-percent').textContent = `${percent}% der Check-ins`;
             }
 
@@ -1475,11 +1471,6 @@
         }
 
         // ==================== DEMOGRAPHICS CHARTS ====================
-        function renderDemographicsCharts() {
-            // This function is just a setup, listener is in setupAllStudioFilters
-            updateDemographicsCharts('all');
-        }
-
         function updateDemographicsCharts(studioFilter) {
             const checkins = studioFilter === 'all' 
                 ? analysisResults.checkins 
@@ -1859,6 +1850,7 @@
             if (monthlyTrends.length < 3) {
                 positiveContainer.innerHTML = '<p class="text-gray-500 text-center py-4">Mind. 3 Monate Daten nötig.</p>';
                 negativeContainer.innerHTML = '<p class="text-gray-500 text-center py-4">Mind. 3 Monate Daten nötig.</p>';
+                document.getElementById('trends-total-percent').textContent = 'Gesamttrend (letzte 3 Mon.): -';
                 return;
             }
 
@@ -2287,13 +2279,14 @@
                 return;
             }
 
+            // v5.11: Fetch the JSON descriptor to get content AND SHA in one call
             const url = `https://api.github.com/repos/${owner}/${repo}/contents/${dataFile}`;
             
             try {
                 const response = await fetch(url, {
                     headers: {
                         'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3.raw' // Get raw content
+                        'Accept': 'application/vnd.github.v3+json' // Get JSON descriptor
                     }
                 });
 
@@ -2301,48 +2294,54 @@
                     throw new Error(`Fehler: ${response.status} ${response.statusText}`);
                 }
 
-                const data = await response.json();
+                const fileData = await response.json();
                 
-                if (data.allCheckins && data.monthlyTrends) {
-                    allCheckins = data.allCheckins || [];
-                    monthlyTrends = data.monthlyTrends || [];
-                    
-                    // v5.10: Re-hydrate Date objects
-                    allCheckins.forEach(c => {
-                        c.timestamp = new Date(c.timestamp);
-                    });
-                    
-                    // Find latest date for merge logic
-                    if (allCheckins.length > 0) {
-                        lastEventDate = new Date(Math.max(...allCheckins.map(c => c.timestamp)));
+                if (fileData.content) {
+                    // Decode Base64 content
+                    const rawJson = decodeURIComponent(escape(atob(fileData.content)));
+                    const data = JSON.parse(rawJson);
+
+                    if (data.allCheckins && data.monthlyTrends) {
+                        allCheckins = data.allCheckins || [];
+                        monthlyTrends = data.monthlyTrends || [];
+                        
+                        // v5.10 Fix: Re-hydrate Date objects
+                        allCheckins.forEach(c => {
+                            c.timestamp = new Date(c.timestamp);
+                        });
+                        
+                        if (allCheckins.length > 0) {
+                            lastEventDate = new Date(Math.max(...allCheckins.map(c => c.timestamp)));
+                        } else {
+                            lastEventDate = null;
+                        }
+
+                        isLoadedFromGitHub = true;
+                        GITHUB_CONFIG.sha = fileData.sha; // v5.11: Store the SHA
+                        setGitHubStatus(`Geladen! (${allCheckins.length} Einträge)`);
+                        console.log('Load successful. SHA:', fileData.sha);
+
+                        // Process and render
+                        filteredCheckins = [...allCheckins];
+                        processAnalysis();
+                        setupTimeFilters();
+                        setupAllStudioFilters();
+                        setupCompareTab();
+                        
+                        document.getElementById('initial-load-section').classList.add('hidden');
+                        document.getElementById('initial-loading').classList.add('hidden');
+                        document.getElementById('results-section').classList.remove('hidden');
+                        document.getElementById('time-filter-section').classList.remove('hidden');
+                        document.getElementById('export-btn').classList.remove('hidden');
+                        document.getElementById('sync-github-btn').classList.remove('hidden');
+                        document.getElementById('add-data-btn').classList.remove('hidden');
+                        
+                        setTimeout(() => closeModal('github-sync-modal'), 1000);
                     } else {
-                        lastEventDate = null;
+                        setGitHubStatus('Fehler: Geladene Daten haben ein ungültiges Format.', true);
                     }
-
-                    isLoadedFromGitHub = true;
-                    setGitHubStatus(`Geladen! (${allCheckins.length} Einträge)`);
-                    
-                    // Now get SHA for saving
-                    await getFileSha(); 
-
-                    // Process and render
-                    filteredCheckins = [...allCheckins];
-                    processAnalysis();
-                    setupTimeFilters();
-                    setupAllStudioFilters();
-                    setupCompareTab();
-                    
-                    document.getElementById('initial-load-section').classList.add('hidden');
-                    document.getElementById('initial-loading').classList.add('hidden');
-                    document.getElementById('results-section').classList.remove('hidden');
-                    document.getElementById('time-filter-section').classList.remove('hidden');
-                    document.getElementById('export-btn').classList.remove('hidden');
-                    document.getElementById('sync-github-btn').classList.remove('hidden');
-                    document.getElementById('add-data-btn').classList.remove('hidden');
-                    
-                    setTimeout(() => closeModal('github-sync-modal'), 1000);
                 } else {
-                    setGitHubStatus('Fehler: Geladene Daten haben ein ungültiges Format.', true);
+                    setGitHubStatus('Fehler: Datei-Inhalt ist leer oder nicht gefunden.', true);
                 }
 
             } catch (err) {
@@ -2354,31 +2353,11 @@
         }
 
         async function getFileSha() {
-            // Helper to get the SHA of the file (needed for updating)
-            const { owner, repo, token, dataFile } = GITHUB_CONFIG;
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${dataFile}`;
-            try {
-                const response = await fetch(url, {
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        console.log('Data file not found. Will create new one.');
-                        GITHUB_CONFIG.sha = null; // File doesn't exist, will create
-                        return;
-                    }
-                    throw new Error(`SHA Fetch Error: ${response.statusText}`);
-                }
-                const data = await response.json();
-                GITHUB_CONFIG.sha = data.sha;
-                console.log('File SHA loaded:', data.sha);
-            } catch (err) {
-                console.error(err);
-                setGitHubStatus(err.message, true);
-            }
+            // This function is now redundant as loadFromGitHub gets the SHA
+            // but we keep it in case saveToGitHub is called first on a new file.
+            // ... (Logic to get SHA if needed) ...
+            // For v5.11, we rely on loadFromGitHub to set the SHA.
+            // If sha is null, saveToGitHub will create a new file.
         }
 
         async function saveToGitHub() {
@@ -2391,20 +2370,48 @@
                 return;
             }
 
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${dataFile}`;
+            // v5.11: If SHA is null, we must check if file exists before saving
+            // to prevent the 422 error.
+            let currentSha = sha;
+            if (!currentSha) {
+                // Try to get SHA just in case file exists but we don't know it
+                const url = `https://api.github.com/repos/${owner}/${repo}/contents/${dataFile}`;
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    if (response.ok) {
+                        const fileData = await response.json();
+                        currentSha = fileData.sha; // Found it! Use this SHA for update.
+                        console.log('SHA was null, but found existing file SHA:', currentSha);
+                    } else if (response.status !== 404) {
+                        // It's not a 404, so it's some other error
+                        throw new Error(`SHA-Prüffehler: ${response.statusText}`);
+                    }
+                    // If 404, currentSha remains null, and we create a new file.
+                } catch (err) {
+                    setGitHubStatus(err.message, true);
+                    return;
+                }
+            }
             
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${dataFile}`;
             const dataToSave = JSON.stringify({ allCheckins, monthlyTrends }, null, 2);
-            const content = btoa(unescape(encodeURIComponent(dataToSave))); // UTF-8 safe btoa
+            // v5.11: UTF-8 safe Base64 encoding
+            const content = btoa(unescape(encodeURIComponent(dataToSave)));
             
             const body = {
                 message: `Update SAMS GYM analysis data (${new Date().toISOString()})`,
                 content: content,
-                sha: sha // Include SHA if updating existing file
+                sha: currentSha // Use the SHA we just confirmed
             };
             
-            // If SHA is null, it's a new file, don't send SHA
             if (!body.sha) {
-                delete body.sha;
+                delete body.sha; // This is correct for CREATING a new file
             }
 
             console.log('Saving to GitHub...', { url, sha: body.sha, size: dataToSave.length });
@@ -2422,7 +2429,6 @@
                 
                 console.log('GitHub Save Response Status:', response.status);
 
-                // v5.9: More robust success check
                 if (response.ok || response.status === 200 || response.status === 201) {
                     const result = await response.json();
                     GITHUB_CONFIG.sha = result.content.sha; // Update SHA for next save
@@ -2434,6 +2440,10 @@
                 } else {
                     const error = await response.json();
                     console.error('GitHub Save Error:', error);
+                    // v5.11: Check for the specific 422 SHA error
+                    if (response.status === 422 && error.message.includes("sha wasn't supplied")) {
+                         throw new Error(`422: SHA-Konflikt. Bitte 'Laden' Sie zuerst die Daten.`);
+                    }
                     throw new Error(`${response.status} ${response.statusText}: ${error.message}`);
                 }
 
@@ -2546,6 +2556,7 @@
         
         // ==================== EXPORT ====================
         document.getElementById('export-btn').addEventListener('click', () => {
+            // v5.10: Data is re-stringified with Date objects as ISO strings
             const dataStr = JSON.stringify({ allCheckins, monthlyTrends }, null, 2);
             const blob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
