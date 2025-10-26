@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- v5.8: GitHub Save Success Check Fix -->
-    <title>SAMS GYM Analytics Dashboard v5.8</title>
+    <!-- v5.10: Load-from-GitHub Date parsing fix + Upload instructions -->
+    <title>SAMS GYM Analytics Dashboard v5.10</title>
     
     <meta name="theme-color" content="#DC2626">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -133,8 +133,8 @@
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
                 <div>
                     <h1 class="text-3xl font-bold" style="color: #DC2626;">
-                        <!-- v5.8: Titel -->
-                        🏋️ SAMS GYM Analytics v5.8
+                        <!-- v5.10: Titel -->
+                        🏋️ SAMS GYM Analytics v5.10
                     </h1>
                     <p class="text-sm text-gray-600 mt-1">
                         Analyse-Zeitraum: <span id="period-display" class="font-medium">-</span>
@@ -240,6 +240,15 @@
                 </button>
             </div>
             
+            <!-- v5.10: Upload Instructions -->
+            <div id="upload-instructions" class="hidden mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                <h4 class="font-bold mb-2">💡 Wichtige Hinweise zum Hinzufügen von Daten:</h4>
+                <ul class="list-disc list-inside space-y-1">
+                    <li><strong>SALTO Ereignisse:</strong> Sie können Ihre *gesamte* Exportdatei hochladen. Das Skript erkennt Duplikate und fügt nur die Einträge hinzu, die neuer sind als Ihre gespeicherten Daten.</li>
+                    <li><strong>Zoho Kontakte:</strong> Laden Sie hier *immer* Ihre **vollständige, aktuelle** Kontaktliste hoch. Diese überschreibt die alte Kontaktliste, um z.B. Namens- oder Altersänderungen zu übernehmen.</li>
+                </ul>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Zoho Contacts Upload -->
                 <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-red-600 transition cursor-pointer" id="contacts-drop-zone">
@@ -559,7 +568,6 @@
                         <h3 class="text-xl font-bold mb-4">Zeitraum-Vergleich</h3>
                         <p class="text-sm text-gray-600 mb-6">Wähle zwei Zeiträume und optional ein Studio aus, um die Kennzahlen zu vergleichen.</p>
 
-                        <!-- v5.6: Studio-Filter hinzugefügt -->
                         <div class="mb-6">
                             <label class="block text-sm font-medium mb-2">Studio wählen (optional):</label>
                             <select id="compare-studio-filter" class="px-4 py-2 border border-gray-300 rounded-lg bg-white">
@@ -641,28 +649,29 @@
                         </div>
 
                         <button id="run-compare-btn" class="w-full text-white font-bold py-4 px-6 rounded-lg shadow-lg transition transform hover:scale-105" style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);">
-                            📊 Vergleichen
+                            📊 Zeiträume vergleichen
                         </button>
 
-                        <!-- Ergebnis-Sektion -->
-                        <div id="compare-results-section" class="hidden mt-8">
+                        <!-- Vergleichs-Ergebnis -->
+                        <div id="compare-results-container" class="hidden mt-8">
                             <h3 class="text-xl font-bold mb-4">Vergleichs-Ergebnis</h3>
                             <div class="overflow-x-auto bg-white rounded-lg shadow">
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-gray-800 text-white">
                                         <tr>
                                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase">Metrik</th>
-                                            <th class="px-6 py-3 text-right text-xs font-semibold uppercase">Zeitraum A</th>
-                                            <th class="px-6 py-3 text-right text-xs font-semibold uppercase">Zeitraum B</th>
-                                            <th class="px-6 py-3 text-right text-xs font-semibold uppercase">Veränderung</th>
+                                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase">Zeitraum A</th>
+                                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase">Zeitraum B</th>
+                                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase">Veränderung</th>
                                         </tr>
                                     </thead>
                                     <tbody id="compare-results-table" class="bg-white divide-y divide-gray-200">
-                                        <!-- Zeilen werden per JS eingefügt -->
+                                        <!-- JS füllt diesen Bereich -->
                                     </tbody>
                                 </table>
                             </div>
                         </div>
+
                     </div>
 
                     <!-- Insights Tab -->
@@ -676,7 +685,7 @@
         </div>
     </div>
 
-    <!-- Example Modals -->
+    <!-- Modals (Example, GitHub Sync) -->
     <div id="example-modal" class="modal">
         <div class="modal-content">
             <div class="flex items-center justify-between mb-4">
@@ -686,43 +695,44 @@
             <div id="example-content"></div>
         </div>
     </div>
-
-    <!-- GitHub Sync Modal -->
-    <div id="github-modal" class="modal">
-        <div class="modal-content max-w-lg">
+    
+    <div id="github-sync-modal" class="modal">
+        <div class="modal-content">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-xl font-bold">☁️ GitHub Sync</h3>
-                <button onclick="closeModal('github-modal')" class="text-gray-600 hover:text-gray-800 text-2xl">×</button>
+                <button onclick="closeModal('github-sync-modal')" class="text-gray-600 hover:text-gray-800 text-2xl">×</button>
             </div>
             
-            <p class="text-sm text-gray-600 mb-2">Speichere oder lade deine Analysedaten als `analysis-data.json` in deinem GitHub-Repo.</p>
-            <p class="text-sm text-gray-600 mb-4">Dein Token wird nur im Browser gespeichert und nie an Dritte gesendet.</p>
+            <p class="text-sm text-gray-600 mb-4">
+                Speichere oder lade deine Analysedaten als 'analysis-data.json' in deinem GitHub-Repo.
+                Dein Token wird nur temporär im Browser gespeichert.
+            </p>
 
             <div class="mb-4">
-                <label for="github-status" class="block text-sm font-medium mb-1">Status:</label>
-                <input type="text" id="github-status" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                <label class="block text-sm font-medium mb-1">Status:</label>
+                <input id="github-status" type="text" readonly class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg" value="Nicht geladen">
             </div>
             
             <div class="mb-4">
-                <label for="github-owner" class="block text-sm font-medium mb-1">Repo-Besitzer (z.B. "sam-ux-sack"):</label>
-                <input type="text" id="github-owner" class="w-full px-3 py-2 border border-gray-300 rounded-lg" value="sam-ux-sack">
-            </div>
-            <div class="mb-4">
-                <label for="github-repo" class="block text-sm font-medium mb-1">Repo-Name (z.B. "sams-gym-data"):</label>
-                <input type="text" id="github-repo" class="w-full px-3 py-2 border border-gray-300 rounded-lg" value="sams-gym-data">
-            </div>
-            <div class="mb-4">
-                <label for="github-token" class="block text-sm font-medium mb-1">GitHub Personal Access Token (classic):</label>
-                <input type="password" id="github-token" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="ghp_...">
-                <a href="https://github.com/settings/tokens/new?scopes=repo&description=SAMS-GYM-Analytics" target="_blank" class="text-xs text-blue-600 hover:underline">Neuen Token erstellen (mit "repo" Rechten)</a>
+                <label class="block text-sm font-medium mb-1">Repo-Besitzer (z.B. "sam-ux-sack"):</label>
+                <input id="github-owner" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
             </div>
 
-            <div id="github-loading" class="hidden text-center my-4">
-                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: #DC2626;"></div>
-                <p class="mt-2 text-gray-600" id="github-loading-text">Aktion wird ausgeführt...</p>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Repo-Name (z.B. "sams-gym-data"):</label>
+                <input id="github-repo" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
             </div>
-            
-            <div id="github-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg my-4">
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">GitHub Personal Access Token (classic):</label>
+                <input id="github-token" type="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                <a href="https://github.com/settings/tokens/new?scopes=repo&description=SAMS-GYM-Analytics" target="_blank" class="text-xs text-blue-600 hover:underline mt-1">
+                    Neuen Token erstellen (mit "repo" Rechten)
+                </a>
+            </div>
+
+            <div id="github-error" class="hidden p-3 bg-red-100 border border-red-300 text-red-800 rounded-lg mb-4 text-sm">
+                Fehler: Irgendwas ist schief gelaufen.
             </div>
 
             <div class="flex gap-4">
@@ -736,11 +746,15 @@
         </div>
     </div>
 
-
     <script>
         // ==================== CONFIGURATION ====================
-        const AGE_GROUPS = ['<20', '20-40', '40-60', '60+'];
-        const AGE_GROUP_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
+        const GITHUB_CONFIG = {
+            owner: 'sam-ux-sack',
+            repo: 'sams-gym-data',
+            token: null,
+            sha: null, // Stores the SHA hash of the file for updates
+            dataFile: 'analysis-data.json'
+        };
 
         const MAIN_DOORS = {
             'Susten Haupttüre': 'Susten GYM',
@@ -749,83 +763,53 @@
             'Visp Center - Eingang': 'Visp-Center'
         };
 
+        const AGE_GROUPS = ['<20', '20-40', '40-60', '60+'];
+        const GENDERS = ['Männlich', 'Weiblich'];
+
         // ==================== DATA STORAGE ====================
-        let contactsData = null;
-        let eventsData = null;
-        let allCheckins = [];
-        let filteredCheckins = [];
-        let analysisResults = null;
-        let monthlyTrends = [];
+        let contactsData = null;    // Temporär für Upload
+        let eventsData = null;      // Temporär für Upload
+        let allCheckins = [];       // Die Haupt-Datenbank
+        let filteredCheckins = [];  // Für die Charts nach Filterung
+        let analysisResults = null; // Aggregierte Ergebnisse
+        let monthlyTrends = [];     // Aggregierte Monats-Daten
         let charts = {};
-        
-        let githubConfig = {
-            owner: 'sam-ux-sack',
-            repo: 'sams-gym-data',
-            token: null,
-            filePath: 'analysis-data.json'
-        };
-        let githubDataSha = null;
-        let lastLoadedTimestamp = null;
+        let isLoadedFromGitHub = false;
+        let lastEventDate = null;
 
-        // ==================== HELPER FUNCTIONS ====================
-        function extractGender(name) {
-            if (name.startsWith('Herr')) return 'Männlich';
-            if (name.startsWith('Frau')) return 'Weiblich';
-            return 'Unknown'; // Bleibt bestehen, falls Zoho-Daten unsauber sind
-        }
+        // ==================== CHART HELPERS ====================
+        Chart.register(ChartDataLabels);
 
-        function getAgeGroup(age) {
-            if (age === null) return null;
-            if (age < 20) return '<20';
-            if (age < 40) return '20-40';
-            if (age < 60) return '40-60';
-            return '60+';
-        }
-
-        function calculateAge(birthdate) {
-            if (!birthdate) return null;
-            let birth;
-            if (birthdate.includes('.')) { // TT.MM.JJJJ
-                const parts = birthdate.split('.');
-                if (parts.length === 3) {
-                    birth = new Date(parts[2], parts[1] - 1, parts[0]);
-                }
-            } else if (birthdate.includes('-')) { // JJJJ-MM-TT
-                birth = new Date(birthdate);
+        function getDatalabelConfig(isInside = false) {
+            if (isInside) {
+                return {
+                    anchor: 'end',
+                    align: 'end',
+                    color: '#FFFFFF',
+                    font: { weight: 'bold' },
+                    formatter: (value) => value > 0 ? value.toLocaleString('de-DE') : null,
+                    offset: -6
+                };
             }
-            
-            if (!birth || isNaN(birth)) {
-                birth = new Date(birthdate);
-            }
-
-            if (!birth || isNaN(birth)) return null;
-            
-            const today = new Date();
-            let age = today.getFullYear() - birth.getFullYear();
-            const m = today.getMonth() - birth.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-                age--;
-            }
-            return age;
+            return {
+                anchor: 'end',
+                align: 'top',
+                color: '#1F2937',
+                font: { weight: 'bold' },
+                formatter: (value) => value.toLocaleString('de-DE')
+            };
         }
 
-        function formatDate(date) {
-            if (!date) return '-';
-            return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        }
-        
-        function formatDateTime(date) {
-            if (!date) return '-';
-            return date.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+        // ==================== MODAL HANDLERS ====================
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
         }
 
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('active');
         }
 
-        // ==================== EXAMPLE DATA ====================
         function showExample(type) {
-            const modal = document.getElementById('example-modal');
             const title = document.getElementById('example-title');
             const content = document.getElementById('example-content');
 
@@ -840,6 +824,29 @@
                             <li><strong>Geburtsdatum</strong> - Format: TT.MM.JJJJ oder JJJJ-MM-TT</li>
                         </ul>
                     </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm border">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="border px-3 py-2">Kundennummer</th>
+                                    <th class="border px-3 py-2">Name</th>
+                                    <th class="border px-3 py-2">Geburtsdatum</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="border px-3 py-2">CUS-12345</td>
+                                    <td class="border px-3 py-2">Herr Max Müller</td>
+                                    <td class="border px-3 py-2">15.03.1990</td>
+                                </tr>
+                                <tr>
+                                    <td class="border px-3 py-2">CUS-12346</td>
+                                    <td class="border px-3 py-2">Frau Anna Schmidt</td>
+                                    <td class="border px-3 py-2">22.07.1985</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 `;
             } else {
                 title.textContent = 'Beispiel: SALTO Ereignisse CSV';
@@ -848,75 +855,100 @@
                         <h4 class="font-semibold mb-2">Format:</h4>
                         <ul class="list-disc list-inside text-sm space-y-1">
                             <li><strong>Spalte 1:</strong> Zeitstempel (TT.MM.JJJJ HH:MM:SS)</li>
-                            <li><strong>Spalte 2:</strong> Event-Type (wird ignoriert)</li>
-                            <li><strong>Spalte 3:</strong> Türname - Muss exakt einer dieser Werte sein:
+                            <li><strong>Spalte 3:</strong> Türname - Muss einer der Haupttüren sein:
                                 <ul class="list-circle list-inside ml-6 mt-1">
-                                    <li>"Susten Haupttüre"</li>
-                                    <li>"Strongman rechts"</li>
-                                    <li>"Visp Süd - Eingang"</li>
-                                    <li>"Visp Center - Eingang"</li>
+                                    ${Object.keys(MAIN_DOORS).map(door => `<li>"${door}"</li>`).join('')}
                                 </ul>
                             </li>
-                            <li><strong>Spalte 4:</strong> Leer</li>
                             <li><strong>Spalte 5:</strong> CUS-Nummer (z.B. "CUS-12345")</li>
                         </ul>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm border">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="border px-3 py-2">Zeitstempel</th>
+                                    <th class="border px-3 py-2">...</th>
+                                    <th class="border px-3 py-2">Türname</th>
+                                    <th class="border px-3 py-2">...</th>
+                                    <th class="border px-3 py-2">CUS-Nr</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="border px-3 py-2">25.10.2025 14:35:22</td>
+                                    <td class="border px-3 py-2">Access granted</td>
+                                    <td class="border px-3 py-2">Susten Haupttüre</td>
+                                    <td class="border px-3 py-2"></td>
+                                    <td class="border px-3 py-2">CUS-12345</td>
+                                </tr>
+                                <tr>
+                                    <td class="border px-3 py-2">25.10.2025 14:38:15</td>
+                                    <td class="border px-3 py-2">Access granted</td>
+                                    <td class="border px-3 py-2">Visp Süd - Eingang</td>
+                                    <td class="border px-3 py-2"></td>
+                                    <td class="border px-3 py-2">CUS-12346</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 `;
             }
 
-            modal.classList.add('active');
+            showModal('example-modal');
         }
 
         // ==================== INITIAL LOAD ====================
         function setupInitialLoad() {
             document.getElementById('load-existing-btn').addEventListener('click', () => {
-                document.getElementById('github-modal').classList.add('active');
+                document.getElementById('initial-load-section').classList.add('hidden');
+                document.getElementById('initial-loading').classList.remove('hidden');
+                loadFromGitHub();
             });
             document.getElementById('start-new-btn').addEventListener('click', startNewAnalysis);
-            
             document.getElementById('cancel-upload-btn').addEventListener('click', () => {
-                if (allCheckins.length > 0) {
-                    document.getElementById('upload-section').classList.add('hidden');
+                document.getElementById('upload-section').classList.add('hidden');
+                if (isLoadedFromGitHub || allCheckins.length > 0) {
                     document.getElementById('results-section').classList.remove('hidden');
                 } else {
-                    document.getElementById('upload-section').classList.add('hidden');
                     document.getElementById('initial-load-section').classList.remove('hidden');
                 }
             });
             document.getElementById('add-data-btn').addEventListener('click', () => {
                 document.getElementById('results-section').classList.add('hidden');
                 document.getElementById('upload-section').classList.remove('hidden');
+                // v5.10: Show instructions if data is already loaded
+                if (allCheckins.length > 0) {
+                    document.getElementById('upload-instructions').classList.remove('hidden');
+                }
             });
         }
 
         function startNewAnalysis() {
+            // Hard-Reset
             allCheckins = [];
             monthlyTrends = [];
-            filteredCheckins = [];
-            analysisResults = null;
-            githubDataSha = null;
-            lastLoadedTimestamp = null;
-            
-            updateDataStatus('Lokal (nicht gespeichert)');
-            document.getElementById('period-display').textContent = '-';
-            document.getElementById('last-event-display').textContent = '-';
-            document.getElementById('time-filter-section').classList.add('hidden');
+            contactsData = null;
+            eventsData = null;
+            isLoadedFromGitHub = false;
+            lastEventDate = null;
+            GITHUB_CONFIG.sha = null;
+
+            document.getElementById('initial-load-section').classList.add('hidden');
             document.getElementById('results-section').classList.add('hidden');
+            document.getElementById('time-filter-section').classList.add('hidden');
             document.getElementById('add-data-btn').classList.add('hidden');
             document.getElementById('export-btn').classList.add('hidden');
             
-            contactsData = null;
-            eventsData = null;
+            document.getElementById('upload-section').classList.remove('hidden');
+            document.getElementById('upload-instructions').classList.add('hidden');
             document.getElementById('contacts-status').textContent = 'Keine Datei';
             document.getElementById('events-status').textContent = 'Keine Datei';
             document.getElementById('contacts-status').classList.remove('text-green-600');
             document.getElementById('events-status').classList.remove('text-green-600');
-            document.getElementById('analyze-btn').classList.add('hidden');
-
-            document.getElementById('initial-load-section').classList.add('hidden');
-            document.getElementById('upload-section').classList.remove('hidden');
+            
+            console.log('New analysis started. All data cleared.');
         }
-
 
         // ==================== FILE UPLOAD HANDLERS ====================
         function setupFileHandlers() {
@@ -972,7 +1004,6 @@
 
             Papa.parse(file, {
                 header: true,
-                skipEmptyLines: true,
                 complete: (results) => {
                     if (type === 'contacts') {
                         contactsData = results.data;
@@ -985,21 +1016,21 @@
                     if (contactsData && eventsData) {
                         document.getElementById('analyze-btn').classList.remove('hidden');
                     }
+                },
+                error: (err) => {
+                    alert(`Fehler beim Parsen der ${type} CSV: ${err.message}`);
+                    statusEl.textContent = `Fehler: ${err.message}`;
+                    statusEl.classList.remove('text-green-600');
+                    statusEl.classList.add('text-red-600');
                 }
             });
         }
 
-        // ==================== DATA ANALYSIS ====================
+        // ==================== DATA ANALYSIS (CSV) ====================
         function analyzeData() {
             document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('analyze-btn').classList.add('hidden');
             document.getElementById('loading-text').textContent = 'Analysiere Kontakte...';
-
-            let mergeDate = null;
-            if (lastLoadedTimestamp) {
-                mergeDate = new Date(lastLoadedTimestamp);
-                console.log('Merging new data since:', mergeDate);
-            }
+            document.getElementById('analyze-btn').classList.add('hidden');
 
             setTimeout(() => {
                 const contactsLookup = {};
@@ -1014,216 +1045,220 @@
                         };
                     }
                 });
-
-                document.getElementById('loading-text').textContent = 'Verarbeite SALTO-Ereignisse...';
-
-                let newCheckins = [];
-                eventsData.forEach(event => {
-                    const cols = Object.values(event);
-                    if (cols.length < 5) return;
-
-                    const timestamp = cols[0];
-                    const doorName = cols[2];
-                    const cusNumber = cols[4];
-
-                    if (!MAIN_DOORS[doorName]) return;
-                    if (!cusNumber || !cusNumber.startsWith('CUS-')) return;
-                    
-                    const contact = contactsLookup[cusNumber];
-                    if (!contact) return; // v5.5: Filtert Personal/unbekannte CUS-Nummern
-
-                    let date = null;
-                    if (timestamp.includes('.')) { // TT.MM.JJJJ HH:MM:SS
-                        const parts = timestamp.split(' ');
-                        const dateParts = parts[0].split('.');
-                        const timeParts = parts[1].split(':');
-                        if (dateParts.length === 3 && timeParts.length === 3) {
-                            date = new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1], timeParts[2]);
-                        }
-                    }
-                    
-                    if (!date || isNaN(date)) {
-                        date = new Date(timestamp);
-                    }
-                    
-                    if (isNaN(date)) return;
-
-                    if (mergeDate && date <= mergeDate) {
-                        return;
-                    }
-
-                    const studio = MAIN_DOORS[doorName];
-                    const age = contact.age || null;
-
-                    newCheckins.push({
-                        timestamp: date.toISOString(),
-                        studio,
-                        cusNumber,
-                        gender: contact.gender || 'Unknown', // Keep 'Unknown' for bad Zoho data
-                        age: age,
-                        ageGroup: getAgeGroup(age),
-                        dateKey: date.toISOString().split('T')[0],
-                        hour: date.getHours(),
-                        day: date.getDay()
-                    });
-                });
-
-                allCheckins.push(...newCheckins);
                 
-                allCheckins = allCheckins.map(c => ({
-                    ...c,
-                    timestamp: new Date(c.timestamp) 
-                }));
-
-                allCheckins.sort((a, b) => a.timestamp - b.timestamp);
-                
-                if (allCheckins.length > 0) {
-                    lastLoadedTimestamp = allCheckins[allCheckins.length - 1].timestamp.toISOString();
-                }
-
-                document.getElementById('loading-text').textContent = 'Erstelle monatliche Trends...';
+                document.getElementById('loading-text').textContent = 'Analysiere Ereignisse...';
 
                 setTimeout(() => {
-                    generateMonthlyTrends();
+                    let newCheckins = 0;
+                    const existingCheckinTimestamps = new Set(allCheckins.map(c => c.timestamp.getTime()));
+                    let latestDate = lastEventDate ? new Date(lastEventDate) : null;
 
-                    filteredCheckins = [...allCheckins];
-                    processAnalysis();
+                    eventsData.forEach(event => {
+                        const cols = Object.values(event);
+                        if (cols.length < 5) return;
 
-                    document.getElementById('loading').classList.add('hidden');
-                    document.getElementById('results-section').classList.remove('hidden');
-                    document.getElementById('time-filter-section').classList.remove('hidden');
-                    document.getElementById('export-btn').classList.remove('hidden');
-                    document.getElementById('add-data-btn').classList.remove('hidden');
-                    document.getElementById('upload-section').classList.add('hidden');
+                        const timestampStr = cols[0];
+                        const doorName = cols[2];
+                        const cusNumber = cols[4];
+
+                        if (!MAIN_DOORS[doorName]) return;
+                        if (!cusNumber || !cusNumber.startsWith('CUS-')) return;
+                        
+                        // v5.6: Filter out checkins with no matching contact
+                        const contact = contactsLookup[cusNumber];
+                        if (!contact) return; 
+
+                        const date = parseGermanDate(timestampStr);
+                        if (!date) return;
+                        
+                        // Intelligent Merge: Skip if timestamp already exists
+                        if (existingCheckinTimestamps.has(date.getTime())) {
+                            return;
+                        }
+
+                        const dateKey = date.toISOString().split('T')[0];
+                        const hour = date.getHours();
+                        const day = (date.getDay() + 6) % 7; // 0=Mo, 1=Di, ..., 6=So
+
+                        allCheckins.push({
+                            timestamp: date,
+                            studio: MAIN_DOORS[doorName],
+                            cusNumber,
+                            name: contact.name, // Added for member list
+                            gender: contact.gender || 'Unknown',
+                            age: contact.age || null,
+                            ageGroup: getAgeGroup(contact.age),
+                            dateKey,
+                            hour,
+                            day
+                        });
+                        newCheckins++;
+
+                        if (!latestDate || date > latestDate) {
+                            latestDate = date;
+                        }
+                    });
+
+                    allCheckins.sort((a, b) => a.timestamp - b.timestamp);
+                    lastEventDate = latestDate;
                     
-                    updateDataStatus('Lokal (nicht auf GitHub gespeichert)');
+                    document.getElementById('loading-text').textContent = 'Generiere monatliche Trends...';
 
-                    setupTimeFilters();
-                    setupTrendsFilters();
-                    renderTrendCharts('all');
-                    analyzeTrendAlerts();
-                }, 50);
+                    setTimeout(() => {
+                        generateMonthlyTrends();
+                        
+                        filteredCheckins = [...allCheckins];
+                        processAnalysis();
 
-            }, 50);
+                        document.getElementById('loading').classList.add('hidden');
+                        document.getElementById('results-section').classList.remove('hidden');
+                        document.getElementById('time-filter-section').classList.remove('hidden');
+                        document.getElementById('export-btn').classList.remove('hidden');
+                        document.getElementById('sync-github-btn').classList.remove('hidden');
+                        document.getElementById('upload-section').classList.add('hidden');
+                        document.getElementById('add-data-btn').classList.remove('hidden');
+
+                        setupTimeFilters();
+                        setupAllStudioFilters();
+                        renderAllCharts();
+                        
+                        // Reset upload form
+                        contactsData = null;
+                        eventsData = null;
+                        document.getElementById('contacts-input').value = null;
+                        document.getElementById('events-input').value = null;
+                        document.getElementById('contacts-status').textContent = 'Keine Datei';
+                        document.getElementById('events-status').textContent = 'Keine Datei';
+                        document.getElementById('contacts-status').classList.remove('text-green-600');
+                        document.getElementById('events-status').classList.remove('text-green-600');
+
+                    }, 20);
+                }, 20);
+            }, 20);
         }
 
         // ==================== MONTHLY TRENDS GENERATION ====================
+        // v5.2: Optimized generation
         function generateMonthlyTrends() {
             const monthlyData = {};
 
-            if (allCheckins.length === 0) {
-                monthlyTrends = [];
-                return;
-            }
-            const firstDate = allCheckins[0].timestamp;
-            const lastDate = allCheckins[allCheckins.length - 1].timestamp;
-
-            let currentDate = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
-            
-            while (currentDate <= lastDate) {
-                const year = currentDate.getFullYear();
-                const month = currentDate.getMonth();
-                const key = `${year}-${String(month + 1).padStart(2, '0')}`;
-
-                const studios = {};
-                Object.values(MAIN_DOORS).forEach(studioName => {
-                    const ageGroups = {};
-                    AGE_GROUPS.forEach(g => {
-                        ageGroups[g] = { male: 0, female: 0, other: 0 };
-                    });
-                    
-                    studios[studioName] = {
-                        total: 0,
-                        male: 0,
-                        female: 0,
-                        other: 0, // Still track internally for calculation robustness
-                        ageGroups: ageGroups
-                    };
-                });
-                
-                monthlyData[key] = {
-                    period: key,
-                    year: year,
-                    month: month + 1,
-                    studios: studios
+            // Helper to initialize a month/studio object
+            const createStatsObject = () => {
+                const stats = {
+                    total: 0,
+                    male: 0,
+                    female: 0,
+                    maleAge: {},
+                    femaleAge: {}
                 };
+                AGE_GROUPS.forEach(group => {
+                    stats.maleAge[group] = 0;
+                    stats.femaleAge[group] = 0;
+                });
+                return stats;
+            };
 
-                currentDate.setMonth(currentDate.getMonth() + 1);
-            }
-
+            // 1. Iterate through all checkins ONCE
             allCheckins.forEach(c => {
                 const year = c.timestamp.getFullYear();
                 const month = c.timestamp.getMonth();
                 const key = `${year}-${String(month + 1).padStart(2, '0')}`;
 
-                const monthStats = monthlyData[key];
-                if (!monthStats) return; 
-                
-                const studioStats = monthStats.studios[c.studio];
-                if (!studioStats) return;
+                if (!monthlyData[key]) {
+                    monthlyData[key] = {
+                        period: key,
+                        year: year,
+                        month: month + 1,
+                        daysInMonth: new Date(year, month + 1, 0).getDate(),
+                        daysRecorded: new Set(),
+                        studios: {}
+                    };
+                }
 
-                studioStats.total++;
+                if (!monthlyData[key].studios[c.studio]) {
+                    monthlyData[key].studios[c.studio] = createStatsObject();
+                }
+
+                monthlyData[key].daysRecorded.add(c.timestamp.getDate());
                 
+                const stats = monthlyData[key].studios[c.studio];
+                stats.total++;
+
                 if (c.gender === 'Männlich') {
-                    studioStats.male++;
-                    if (c.ageGroup) {
-                        studioStats.ageGroups[c.ageGroup].male++;
+                    stats.male++;
+                    if (stats.maleAge[c.ageGroup] !== undefined) {
+                        stats.maleAge[c.ageGroup]++;
                     }
                 } else if (c.gender === 'Weiblich') {
-                    studioStats.female++;
-                    if (c.ageGroup) {
-                        studioStats.ageGroups[c.ageGroup].female++;
-                    }
-                } else {
-                    studioStats.other++;
-                    if (c.ageGroup) {
-                        studioStats.ageGroups[c.ageGroup].other++;
+                    stats.female++;
+                    if (stats.femaleAge[c.ageGroup] !== undefined) {
+                        stats.femaleAge[c.ageGroup]++;
                     }
                 }
             });
 
-            const lastMonthKey = Object.keys(monthlyData).pop();
-            if (lastMonthKey) {
-                const lastMonthData = monthlyData[lastMonthKey];
-                const today = new Date();
-                const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-                const currentDay = today.getDate();
+            // 2. Convert to array, sort, and apply projection
+            monthlyTrends = Object.keys(monthlyData).sort().map(key => {
+                const data = monthlyData[key];
                 
-                if (lastMonthData.year === today.getFullYear() && lastMonthData.month === today.getMonth() + 1 && currentDay < daysInMonth) {
-                    const factor = daysInMonth / currentDay;
-                    lastMonthData.isProjected = true; 
-                    
-                    Object.values(lastMonthData.studios).forEach(studio => {
-                        studio.total = Math.round(studio.total * factor);
-                        studio.male = Math.round(studio.male * factor);
-                        studio.female = Math.round(studio.female * factor);
-                        studio.other = Math.round(studio.other * factor);
-                        
-                        AGE_GROUPS.forEach(g => {
-                            studio.ageGroups[g].male = Math.round(studio.ageGroups[g].male * factor);
-                            studio.ageGroups[g].female = Math.round(studio.ageGroups[g].female * factor);
-                            studio.ageGroups[g].other = Math.round(studio.ageGroups[g].other * factor);
-                        });
-                    });
-                }
-            }
+                // Projection for incomplete months
+                const today = new Date();
+                const isCurrentMonth = data.year === today.getFullYear() && data.month === (today.getMonth() + 1);
+                let projectionFactor = 1.0;
+                let isProjected = false;
 
-            monthlyTrends = Object.values(monthlyData);
-            console.log('Monthly trends generated (Optimized):', monthlyTrends.length, 'months');
+                if (isCurrentMonth) {
+                    const daysRecordedCount = data.daysRecorded.size;
+                    if (daysRecordedCount < data.daysInMonth) {
+                        projectionFactor = data.daysInMonth / daysRecordedCount;
+                        isProjected = true;
+                    }
+                }
+                
+                Object.values(data.studios).forEach(studio => {
+                    if (isProjected) {
+                        studio.total = Math.round(studio.total * projectionFactor);
+                        studio.male = Math.round(studio.male * projectionFactor);
+                        studio.female = Math.round(studio.female * projectionFactor);
+                        AGE_GROUPS.forEach(group => {
+                            studio.maleAge[group] = Math.round(studio.maleAge[group] * projectionFactor);
+                            studio.femaleAge[group] = Math.round(studio.femaleAge[group] * projectionFactor);
+                        });
+                    }
+                });
+
+                return {
+                    period: data.period + (isProjected ? ' (Hochr.)' : ''),
+                    year: data.year,
+                    month: data.month,
+                    studios: data.studios
+                };
+            });
+            console.log('Monthly trends generated/updated:', monthlyTrends.length, 'months');
         }
 
 
+        // ==================== MAIN ANALYSIS (after filter) ====================
         function processAnalysis() {
+            if (allCheckins.length === 0) {
+                console.log('processAnalysis skipped: no checkins');
+                return;
+            }
+
             const studioStats = {};
             const dailyStats = {};
             const hourlyStats = {};
             const weekdayStats = {};
+            
+            Object.values(MAIN_DOORS).forEach(studio => {
+                studioStats[studio] = 0;
+            });
 
             filteredCheckins.forEach(c => {
                 studioStats[c.studio] = (studioStats[c.studio] || 0) + 1;
                 dailyStats[c.dateKey] = (dailyStats[c.dateKey] || 0) + 1;
                 
-                const hourKey = `${c.day}-${c.hour}`;
+                const hourKey = `${c.day}-${c.hour}`; // 0-Mo, 6-So
                 hourlyStats[hourKey] = (hourlyStats[hourKey] || 0) + 1;
                 
                 weekdayStats[c.day] = (weekdayStats[c.day] || 0) + 1;
@@ -1253,7 +1288,7 @@
             const monthSelector = document.getElementById('month-selector');
             const applyBtn = document.getElementById('apply-filter-btn');
 
-            const years = [...new Set(allCheckins.map(c => c.timestamp.getFullYear()))].sort();
+            const years = [...new Set(allCheckins.map(c => c.timestamp.getFullYear()))].sort((a, b) => b - a);
             const yearSelect = document.getElementById('year-select');
             yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
 
@@ -1265,695 +1300,109 @@
             });
 
             applyBtn.addEventListener('click', applyTimeFilter);
-
-            setupCompareFilters(years);
         }
-
+        
         function applyTimeFilter() {
             const periodType = document.getElementById('period-type').value;
-            const year = parseInt(document.getElementById('year-select').value);
-            const quarter = document.getElementById('quarter-select').value;
-            const month = parseInt(document.getElementById('month-select').value);
-
-            const settings = { periodType, year, quarter, month };
-            filteredCheckins = getFilteredCheckins(settings);
+            
+            if (periodType === 'all') {
+                filteredCheckins = [...allCheckins];
+            } else {
+                const year = parseInt(document.getElementById('year-select').value);
+                
+                if (periodType === 'year') {
+                    filteredCheckins = allCheckins.filter(c => c.timestamp.getFullYear() === year);
+                } else if (periodType === 'quarter') {
+                    const quarter = document.getElementById('quarter-select').value;
+                    const qMap = { 'Q1': [0, 1, 2], 'Q2': [3, 4, 5], 'Q3': [6, 7, 8], 'Q4': [9, 10, 11] };
+                    const months = qMap[quarter];
+                    filteredCheckins = allCheckins.filter(c => 
+                        c.timestamp.getFullYear() === year && months.includes(c.timestamp.getMonth())
+                    );
+                } else if (periodType === 'month') {
+                    const month = parseInt(document.getElementById('month-select').value) - 1;
+                    filteredCheckins = allCheckins.filter(c => 
+                        c.timestamp.getFullYear() === year && c.timestamp.getMonth() === month
+                    );
+                }
+            }
 
             processAnalysis();
         }
 
-        // v5.6: Studio Filter hinzugefügt
-        function getFilteredCheckins(settings, studioFilter = 'all') {
-            const { periodType, year, quarter, month } = settings;
-            let baseCheckins = [...allCheckins];
-
-            // Filter by Studio first if specified
-            if (studioFilter !== 'all') {
-                baseCheckins = baseCheckins.filter(c => c.studio === studioFilter);
-            }
-
-            // Then filter by time period
-            if (periodType === 'all') {
-                return baseCheckins;
-            }
-            if (periodType === 'year') {
-                return baseCheckins.filter(c => c.timestamp.getFullYear() === year);
-            }
-            if (periodType === 'quarter') {
-                const qMap = { 'Q1': [0, 1, 2], 'Q2': [3, 4, 5], 'Q3': [6, 7, 8], 'Q4': [9, 10, 11] };
-                const months = qMap[quarter];
-                return baseCheckins.filter(c => 
-                    c.timestamp.getFullYear() === year && months.includes(c.timestamp.getMonth())
-                );
-            }
-            if (periodType === 'month') {
-                const monthIdx = month - 1;
-                return baseCheckins.filter(c => 
-                    c.timestamp.getFullYear() === year && c.timestamp.getMonth() === monthIdx
-                );
-            }
-            return []; // Should not happen
-        }
-        
-        // v5.6: Studio Filter hinzugefügt
-        function setupCompareFilters(years) {
-            if (years.length === 0) return;
-            
-            const yearSelectA = document.getElementById('year-select-A');
-            const yearSelectB = document.getElementById('year-select-B');
-            const yearOptions = years.map(y => `<option value="${y}">${y}</option>`).join('');
-            yearSelectA.innerHTML = yearOptions;
-            yearSelectB.innerHTML = yearOptions;
-
-            // Populate compare studio filter
-            const compareStudioFilter = document.getElementById('compare-studio-filter');
-            const studioOptions = Object.values(MAIN_DOORS)
-                                      .map(studio => `<option value="${studio}">${studio}</option>`)
-                                      .join('');
-            compareStudioFilter.innerHTML = '<option value="all">Alle Studios (Gesamt)</option>' + studioOptions;
-
-
-            if (years.length > 0) {
-                document.getElementById('period-type-A').value = 'year';
-                document.getElementById('year-selector-A').classList.remove('hidden');
-                yearSelectA.value = years[years.length - 2] || years[0];
-                
-                document.getElementById('period-type-B').value = 'year';
-                document.getElementById('year-selector-B').classList.remove('hidden');
-                yearSelectB.value = years[years.length - 1] || years[0];
-            }
-
-            document.querySelectorAll('.compare-period-type').forEach(select => {
-                select.addEventListener('change', (e) => {
-                    const period = e.target.dataset.period; // 'A' or 'B'
-                    const type = e.target.value;
-                    document.getElementById(`year-selector-${period}`).classList.toggle('hidden', type === 'all');
-                    document.getElementById(`quarter-selector-${period}`).classList.toggle('hidden', type !== 'quarter');
-                    document.getElementById(`month-selector-${period}`).classList.toggle('hidden', type !== 'month');
-                });
-            });
-
-            document.getElementById('run-compare-btn').addEventListener('click', runComparison);
-        }
-
-        // v5.6: Studio Filter hinzugefügt
-        function runComparison() {
-            const studioFilter = document.getElementById('compare-studio-filter').value;
-            
-            const settingsA = {
-                periodType: document.getElementById('period-type-A').value,
-                year: parseInt(document.getElementById('year-select-A').value),
-                quarter: document.getElementById('quarter-select-A').value,
-                month: parseInt(document.getElementById('month-select-A').value)
-            };
-            const settingsB = {
-                periodType: document.getElementById('period-type-B').value,
-                year: parseInt(document.getElementById('year-select-B').value),
-                quarter: document.getElementById('quarter-select-B').value,
-                month: parseInt(document.getElementById('month-select-B').value)
-            };
-
-            const checkinsA = getFilteredCheckins(settingsA, studioFilter);
-            const checkinsB = getFilteredCheckins(settingsB, studioFilter);
-
-            const statsA = calculateSimpleStats(checkinsA);
-            const statsB = calculateSimpleStats(checkinsB);
-
-            renderCompareResults(statsA, statsB);
-            document.getElementById('compare-results-section').classList.remove('hidden');
-        }
-
-        // v5.6: Unbekannt entfernt / FIX
-        function calculateSimpleStats(checkins) {
-            if (checkins.length === 0) {
-                return {
-                    total: 0, avgDaily: 0, male: 0, female: 0,
-                    ageGroups: { '<20': 0, '20-40': 0, '40-60': 0, '60+': 0 }
-                };
-            }
-            
-            const dailyStats = {};
-            let male = 0;
-            let female = 0;
-            const ageGroups = { '<20': 0, '20-40': 0, '40-60': 0, '60+': 0 };
-
-            checkins.forEach(c => {
-                dailyStats[c.dateKey] = (dailyStats[c.dateKey] || 0) + 1;
-                
-                if (c.gender === 'Männlich') male++;
-                else if (c.gender === 'Weiblich') female++;
-                // 'Unknown' wird ignoriert
-
-                if (c.ageGroup) {
-                    ageGroups[c.ageGroup]++;
-                }
-            });
-
-            const daysCount = Object.keys(dailyStats).length;
-            const avgDaily = daysCount > 0 ? (checkins.length / daysCount) : 0;
-
-            return {
-                total: checkins.length,
-                avgDaily: avgDaily,
-                male: male,
-                female: female,
-                ageGroups: ageGroups
-            };
-        }
-
-        // v5.6: Unbekannt entfernt / FIX
-        function renderCompareResults(statsA, statsB) {
-            const tbody = document.getElementById('compare-results-table');
-            tbody.innerHTML = '';
-
-            const formatPercent = (a, b) => {
-                if (a === 0) {
-                    return b > 0 ? '<span class="text-green-600 font-bold">NEU</span>' : '-';
-                }
-                if (b === 0) {
-                    return a > 0 ? '<span class="text-red-600 font-bold">-100.0%</span>' : '-';
-                }
-                const percent = ((b - a) / a) * 100;
-                const color = percent >= 0 ? 'text-green-600' : 'text-red-600';
-                const sign = percent >= 0 ? '+' : '';
-                return `<span class="${color} font-bold">${sign}${percent.toFixed(1)}%</span>`;
-            };
-            
-            const createRow = (label, valueA, valueB, isAvg = false) => {
-                const valA_str = isAvg ? valueA.toFixed(1) : valueA.toLocaleString('de-DE');
-                const valB_str = isAvg ? valueB.toFixed(1) : valueB.toLocaleString('de-DE');
-                return `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap font-medium">${label}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-700">${valA_str}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-gray-700">${valB_str}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right">${formatPercent(valueA, valueB)}</td>
-                    </tr>
-                `;
-            };
-            
-            tbody.innerHTML += createRow('Gesamt Check-ins', statsA.total, statsB.total);
-            tbody.innerHTML += createRow('Ø Check-ins / Tag', statsA.avgDaily, statsB.avgDaily, true);
-            
-            tbody.innerHTML += '<tr class="bg-gray-50"><td colspan="4" class="py-2"></td></tr>';
-            
-            tbody.innerHTML += createRow('Männer', statsA.male, statsB.male);
-            tbody.innerHTML += createRow('Frauen', statsA.female, statsB.female);
-            
-            tbody.innerHTML += '<tr class="bg-gray-50"><td colspan="4" class="py-2"></td></tr>';
-
-            AGE_GROUPS.forEach(group => {
-                tbody.innerHTML += createRow(`Altersgruppe ${group}`, statsA.ageGroups[group], statsB.ageGroups[group]);
-            });
-        }
-
-
-        // ==================== TRENDS FILTERS ====================
-        function setupTrendsFilters() {
-            const filterSelect = document.getElementById('trends-studio-filter');
+        // ==================== STUDIO FILTERS (Setup) ====================
+        function setupAllStudioFilters() {
             const studios = Object.values(MAIN_DOORS);
+            const selects = [
+                document.getElementById('demo-studio-filter'),
+                document.getElementById('util-studio-filter'),
+                document.getElementById('trends-studio-filter'),
+                document.getElementById('member-studio-filter'),
+                document.getElementById('compare-studio-filter')
+            ];
             
-            filterSelect.innerHTML = '<option value="all">Alle Studios (Gesamt)</option>';
-            studios.forEach(studio => {
-                const option = document.createElement('option');
-                option.value = studio;
-                option.textContent = studio;
-                filterSelect.appendChild(option);
-            });
-
-            filterSelect.addEventListener('change', (e) => {
-                renderTrendCharts(e.target.value);
-                analyzeTrendAlerts();
-            });
-
-            if (monthlyTrends.length > 0) {
-                document.getElementById('trends-period-count').textContent = monthlyTrends.length;
-                const firstMonth = monthlyTrends[0];
-                const lastMonth = monthlyTrends[monthlyTrends.length - 1];
-                document.getElementById('trends-date-range').textContent = `${firstMonth.period} - ${lastMonth.period}`;
-            }
-        }
-
-        // ==================== TREND CHARTS ====================
-        function renderTrendCharts(studioFilter) {
-            const labels = monthlyTrends.map(m => m.isProjected ? `${m.period} (Hochr.)` : m.period);
-            
-            renderTrendTotalChart(labels, studioFilter);
-            renderTrendGenderChart(labels, studioFilter);
-            renderTrendMaleAgeChart(labels, studioFilter);
-            renderTrendFemaleAgeChart(labels, studioFilter);
-        }
-
-        function getAggregatedMonthlyData(studioFilter, dataExtractor) {
-            return monthlyTrends.map(m => {
-                if (studioFilter === 'all') {
-                    return Object.values(m.studios).reduce((sum, s) => sum + dataExtractor(s), 0);
-                } else {
-                    return m.studios[studioFilter] ? dataExtractor(m.studios[studioFilter]) : 0;
-                }
-            });
-        }
-
-        function renderTrendTotalChart(labels, studioFilter) {
-            const ctx = document.getElementById('chart-trends-total');
-            if (charts.trendsTotal) charts.trendsTotal.destroy();
-
-            const data = getAggregatedMonthlyData(studioFilter, (s) => s.total);
-
-            charts.trendsTotal = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Check-ins',
-                        data,
-                        borderColor: '#DC2626',
-                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-        }
-
-        function renderTrendGenderChart(labels, studioFilter) {
-            const ctx = document.getElementById('chart-trends-gender');
-            if (charts.trendsGender) charts.trendsGender.destroy();
-
-            const maleData = getAggregatedMonthlyData(studioFilter, (s) => s.male);
-            const femaleData = getAggregatedMonthlyData(studioFilter, (s) => s.female);
-
-            charts.trendsGender = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [
-                        {
-                            label: 'Männer',
-                            data: maleData,
-                            borderColor: '#1F2937',
-                            fill: false,
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Frauen',
-                            data: femaleData,
-                            borderColor: '#DC2626',
-                            fill: false,
-                            tension: 0.4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top' }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-        }
-
-        function renderTrendMaleAgeChart(labels, studioFilter) {
-            const ctx = document.getElementById('chart-trends-male-age');
-            if (charts.trendsMaleAge) charts.trendsMaleAge.destroy();
-
-            const datasets = AGE_GROUPS.map((group, idx) => ({
-                label: group,
-                data: getAggregatedMonthlyData(studioFilter, (s) => s.ageGroups[group].male),
-                borderColor: AGE_GROUP_COLORS[idx],
-                fill: false,
-                tension: 0.4
-            }));
-
-            charts.trendsMaleAge = new Chart(ctx, {
-                type: 'line',
-                data: { labels, datasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top' }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-        }
-
-        function renderTrendFemaleAgeChart(labels, studioFilter) {
-            const ctx = document.getElementById('chart-trends-female-age');
-            if (charts.trendsFemaleAge) charts.trendsFemaleAge.destroy();
-
-            const datasets = AGE_GROUPS.map((group, idx) => ({
-                label: group,
-                data: getAggregatedMonthlyData(studioFilter, (s) => s.ageGroups[group].female),
-                borderColor: AGE_GROUP_COLORS[idx],
-                fill: false,
-                tension: 0.4
-            }));
-
-            charts.trendsFemaleAge = new Chart(ctx, {
-                type: 'line',
-                data: { labels, datasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top' }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-        }
-
-        // ==================== TREND ANALYSIS ====================
-        function analyzeTrendAlerts() {
-            const studioFilter = document.getElementById('trends-studio-filter').value;
-            const containerPositive = document.getElementById('trend-alerts-positive');
-            const containerNegative = document.getElementById('trend-alerts-negative');
-            containerPositive.innerHTML = '';
-            containerNegative.innerHTML = '';
-
-            if (monthlyTrends.length < 3) {
-                const msg = '<p class="text-gray-500 text-center py-4">Mindestens 3 Monate Daten nötig.</p>';
-                containerPositive.innerHTML = msg;
-                containerNegative.innerHTML = msg;
-                return;
-            }
-            
-            const recentTrends = monthlyTrends.slice(-3);
-            const t1 = recentTrends[0];
-            const t2 = recentTrends[1];
-            const t3 = recentTrends[2];
-
-            const alertsPositive = [];
-            const alertsNegative = [];
-
-            const studios = studioFilter === 'all' ? Object.values(MAIN_DOORS) : [studioFilter];
-            const filterName = studioFilter === 'all' ? 'Alle Studios' : studioFilter;
-
-            const extract = (monthData, studio, extractor) => {
-                if (!monthData) return 0; // Guard against undefined monthData
-                if (studio === 'Alle Studios') {
-                    // Guard against missing studios in monthData
-                    return monthData.studios ? Object.values(monthData.studios).reduce((sum, s) => sum + extractor(s), 0) : 0;
-                }
-                 // Guard against missing specific studio or studios object
-                return (monthData.studios && monthData.studios[studio]) ? extractor(monthData.studios[studio]) : 0;
-            };
-
-            const v1_total = extract(t1, filterName, s => s.total);
-            const v3_total = extract(t3, filterName, s => s.total);
-            const totalTrendEl = document.getElementById('trends-total-percent');
-            
-            if (v1_total > 0) {
-                const percent = ((v3_total - v1_total) / v1_total) * 100;
-                const color = percent >= 0 ? 'text-green-600' : 'text-red-600';
-                const sign = percent >= 0 ? '+' : '';
-                totalTrendEl.innerHTML = `Gesamttrend (letzte 3 Mon.): <span class="${color} font-bold">${sign}${percent.toFixed(1)}%</span>`;
-            } else {
-                totalTrendEl.textContent = 'Gesamttrend (letzte 3 Mon.): -';
-            }
-            
-            if (studioFilter !== 'all') {
+            selects.forEach(select => {
+                if (!select) return;
+                select.innerHTML = '<option value="all">Alle Studios (Gesamt)</option>';
                 studios.forEach(studio => {
-                    const v1 = extract(t1, studio, s => s.total);
-                    const v2 = extract(t2, studio, s => s.total);
-                    const v3 = extract(t3, studio, s => s.total);
-
-                    if (v1 > v2 && v2 > v3 && v1 > 30) {
-                        const decline = ((v1 - v3) / v1 * 100).toFixed(0);
-                        alertsNegative.push({
-                            icon: '📉',
-                            title: `${studio}: Steter Rückgang`,
-                            description: `-${decline}% über 3 Monate (${v1} auf ${v3} Öffnungen)`
-                        });
-                    }
-                    if (v1 < v2 && v2 < v3 && v1 > 10) {
-                        const growth = ((v3 - v1) / v1 * 100).toFixed(0);
-                        alertsPositive.push({
-                            icon: '📈',
-                            title: `${studio}: Starkes Wachstum`,
-                            description: `+${growth}% über 3 Monate (${v1} auf ${v3} Öffnungen)`
-                        });
-                    }
+                    const option = document.createElement('option');
+                    option.value = studio;
+                    option.textContent = studio;
+                    select.appendChild(option);
                 });
-            }
-
-            AGE_GROUPS.forEach(group => {
-                const v1_male = extract(t1, filterName, s => s.ageGroups[group]?.male ?? 0); // Add guard
-                const v3_male = extract(t3, filterName, s => s.ageGroups[group]?.male ?? 0); // Add guard
-                
-                if (v1_male > 10 && v3_male < v1_male * 0.7) {
-                    alertsNegative.push({
-                        icon: '👨',
-                        title: `Rückgang Männer ${group}`,
-                        description: `Rückgang von ${v1_male} auf ${v3_male} Öffnungen`
-                    });
-                }
-                if (v1_male > 5 && v3_male > v1_male * 1.5) {
-                    alertsPositive.push({
-                        icon: '👨',
-                        title: `Wachstum Männer ${group}`,
-                        description: `Anstieg von ${v1_male} auf ${v3_male} Öffnungen`
-                    });
-                }
-
-                const v1_female = extract(t1, filterName, s => s.ageGroups[group]?.female ?? 0); // Add guard
-                const v3_female = extract(t3, filterName, s => s.ageGroups[group]?.female ?? 0); // Add guard
-                
-                if (v1_female > 10 && v3_female < v1_female * 0.7) {
-                    alertsNegative.push({
-                        icon: '👩',
-                        title: `Rückgang Frauen ${group}`,
-                        description: `Rückgang von ${v1_female} auf ${v3_female} Öffnungen`
-                    });
-                }
-                if (v1_female > 5 && v3_female > v1_female * 1.5) {
-                    alertsPositive.push({
-                        icon: '👩',
-                        title: `Wachstum Frauen ${group}`,
-                        description: `Anstieg von ${v1_female} auf ${v3_female} Öffnungen`
-                    });
-                }
             });
 
-            const renderAlert = (alert) => `
-                <div class="p-3 rounded-lg bg-white shadow-sm border">
-                    <div class="flex items-start">
-                        <div class="text-2xl mr-3">${alert.icon}</div>
-                        <div class="flex-1">
-                            <h5 class="font-bold text-sm">${alert.title}</h5>
-                            <p class="text-xs text-gray-700">${alert.description}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
+            // Add specific listeners
+            document.getElementById('demo-studio-filter').addEventListener('change', (e) => updateDemographicsCharts(e.target.value));
+            document.getElementById('util-studio-filter').addEventListener('change', (e) => updateUtilizationCharts(e.target.value));
+            document.getElementById('trends-studio-filter').addEventListener('change', (e) => renderTrendCharts(e.target.value));
+            document.getElementById('member-studio-filter').addEventListener('change', (e) => renderMembersTab(e.target.value));
+        }
 
-            if (alertsPositive.length === 0) {
-                containerPositive.innerHTML = '<p class="text-gray-500 text-center py-4 text-sm">Kein signifikantes Wachstum erkannt.</p>';
-            } else {
-                containerPositive.innerHTML = alertsPositive.map(renderAlert).join('');
-            }
-            
-            if (alertsNegative.length === 0) {
-                containerNegative.innerHTML = '<p class="text-gray-500 text-center py-4 text-sm">Keine signifikanten Rückgänge erkannt.</p>';
-            } else {
-                containerNegative.innerHTML = alertsNegative.map(renderAlert).join('');
-            }
+
+        // ==================== RENDER ALL ====================
+        function renderAllCharts() {
+            renderTrendCharts('all');
+            updateDemographicsCharts('all');
+            updateUtilizationCharts('all');
+            renderMembersTab('all');
+            analyzeTrendAlerts('all');
         }
         
-        // ==================== MEMBER ANALYSIS ====================
-        function setupMemberFilter() {
-            const filterSelect = document.getElementById('member-studio-filter');
-            if (!filterSelect) return; 
-            
-            // Ensure analysisResults exists before accessing studioStats
-            const { studioStats } = analysisResults || {}; 
-            if (!studioStats) return;
-
-            const currentVal = filterSelect.value; 
-            
-            filterSelect.innerHTML = '<option value="all">Alle Studios (Gesamt)</option>';
-            Object.keys(studioStats).forEach(studio => {
-                const option = document.createElement('option');
-                option.value = studio;
-                option.textContent = studio;
-                filterSelect.appendChild(option);
-            });
-            
-            // Restore previous selection if possible
-            if (Object.keys(studioStats).includes(currentVal) || currentVal === 'all') {
-                filterSelect.value = currentVal;
-            } else {
-                 filterSelect.value = 'all'; // Default to 'all' if previous selection is invalid
-            }
-            
-            // Ensure listener is attached only once
-            if (!filterSelect.dataset.listener) {
-                filterSelect.addEventListener('change', renderMemberAnalysis);
-                filterSelect.dataset.listener = 'true';
-            }
-        }
-        
-        function renderMemberAnalysis() {
-            const studioFilter = document.getElementById('member-studio-filter').value;
-            const topList = document.getElementById('top-members-list');
-            topList.innerHTML = ''; // Clear previous list
-
-             // Ensure analysisResults exists
-            if (!analysisResults || !analysisResults.checkins) {
-                 topList.innerHTML = '<p class="text-gray-500 text-center py-4 text-sm">Keine Analysedaten verfügbar.</p>';
-                 return;
-            }
-
-            const checkins = studioFilter === 'all' 
-                ? analysisResults.checkins 
-                : analysisResults.checkins.filter(c => c.studio === studioFilter);
-
-            const memberCounts = {};
-            checkins.forEach(c => {
-                // Ensure cusNumber is valid before counting
-                if (c.cusNumber) {
-                    memberCounts[c.cusNumber] = (memberCounts[c.cusNumber] || 0) + 1;
-                }
-            });
-
-            const sortedMembers = Object.entries(memberCounts).sort((a, b) => b[1] - a[1]);
-
-            if (sortedMembers.length === 0) {
-                topList.innerHTML = '<p class="text-gray-500 text-center py-4 text-sm">Keine Daten für diese Auswahl.</p>';
-                return;
-            }
-
-            sortedMembers.slice(0, 20).forEach(([cusNumber, count]) => {
-                const item = document.createElement('div');
-                item.className = 'member-list-item text-sm';
-                item.innerHTML = `
-                    <span class="font-medium text-gray-800">${cusNumber}</span>
-                    <span class="font-bold text-red-600">${count} Check-ins</span>
-                `;
-                topList.appendChild(item);
-            });
-        }
-
-        // ==================== RENDER RESULTS ====================
         function renderResults() {
-             // Ensure analysisResults exists before proceeding
-            if (!analysisResults) {
-                console.error("renderResults called but analysisResults is null.");
-                // Optionally display an error message to the user
-                return;
-            }
-
             const { checkins, studioStats, dailyStats, startDate, endDate } = analysisResults;
-            
-             // Guard against potentially null or invalid values
-            document.getElementById('period-display').textContent = (startDate && endDate) ? `${formatDate(startDate)} - ${formatDate(endDate)}` : '-';
-            
-            if(endDate instanceof Date && !isNaN(endDate)) {
-                document.getElementById('last-event-display').textContent = `${formatDateTime(endDate)}`;
-            } else {
-                 document.getElementById('last-event-display').textContent = '-'; 
-            }
 
-            document.getElementById('stat-total-checkins').textContent = (checkins?.length ?? 0).toLocaleString('de-DE');
-            
-            const daysCount = dailyStats ? Object.keys(dailyStats).length : 0;
-            const avgDaily = (daysCount > 0 && checkins?.length) ? (checkins.length / daysCount).toFixed(1) : "0.0";
-            document.getElementById('stat-avg-daily').textContent = avgDaily.replace('.', ',');
+            document.getElementById('period-display').textContent = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+            document.getElementById('last-event-display').textContent = lastEventDate ? lastEventDate.toLocaleString('de-DE') : '-';
 
-            const topStudio = studioStats ? Object.entries(studioStats).sort((a, b) => b[1] - a[1])[0] : null;
-            if (topStudio && checkins?.length > 0) {
+            document.getElementById('stat-total-checkins').textContent = checkins.length.toLocaleString('de-DE');
+            
+            const daysCount = Object.keys(dailyStats).length || 1;
+            const avgDaily = Math.round(checkins.length / daysCount);
+            document.getElementById('stat-avg-daily').textContent = avgDaily.toLocaleString('de-DE');
+
+            const topStudio = Object.entries(studioStats).sort((a, b) => b[1] - a[1])[0];
+            if (topStudio) {
                 document.getElementById('stat-top-studio').textContent = topStudio[0];
                 const percent = ((topStudio[1] / checkins.length) * 100).toFixed(0);
                 document.getElementById('stat-top-studio-percent').textContent = `${percent}% der Check-ins`;
-            } else {
-                 document.getElementById('stat-top-studio').textContent = '-';
-                 document.getElementById('stat-top-studio-percent').textContent = '-';
             }
 
-            // Call rendering functions only if data is likely present
-             if (checkins && checkins.length > 0) {
-                renderStudioChart();
-                renderDailyChart();
-                renderDemographicsCharts();
-                renderStudioComparisonTable();
-                renderUtilizationCharts();
-                renderHeatmapTable();
-                setupMemberFilter(); // Setup filter options based on available studios
-                renderMemberAnalysis(); // Render member data based on current filter
-                renderInsights();
-             } else {
-                 console.warn("No check-in data available to render charts/tables.");
-                 // Optionally clear or hide chart areas
-                 clearChartsAndTables();
-             }
-        }
-        
-        // Helper to clear chart canvases and table bodies if needed
-        function clearChartsAndTables() {
-            Object.values(charts).forEach(chart => chart?.destroy());
-            charts = {};
-            document.getElementById('studio-comparison-table').innerHTML = '';
-            document.getElementById('heatmap-table').innerHTML = '';
-            document.getElementById('top-members-list').innerHTML = '<p class="text-gray-500 text-center py-4 text-sm">Keine Daten verfügbar.</p>';
-            document.getElementById('insights-container').innerHTML = '<p class="text-gray-500 text-center py-8">Keine Daten verfügbar.</p>';
-            // Add more clears as needed
-        }
-
-
-        // ==================== BASIC CHARTS ====================
-        
-        const datalabelsInside = {
-            anchor: 'end',
-            align: 'end',
-            offset: -4,
-            color: 'white',
-            font: { weight: 'bold' }
-        };
-        const datalabelsOutside = {
-            anchor: 'end',
-            align: 'top',
-            color: '#1F2937',
-            font: { weight: 'bold' }
-        };
-        const getDatalabelConfig = (ctx) => {
-            // Guard against undefined context or data
-             if (!ctx || !ctx.dataset || !ctx.dataset.data || ctx.dataIndex === undefined) return datalabelsOutside;
-
-            const value = ctx.dataset.data[ctx.dataIndex];
-             // Guard against undefined scales or max value
-            const max = ctx.chart?.scales?.y?.max; 
+            // Overview Charts
+            renderStudioChart();
+            renderDailyChart();
             
-            if (max && max > 0 && typeof value === 'number') {
-                 return (value / max > 0.9) ? datalabelsInside : datalabelsOutside;
-            }
-             return datalabelsOutside; 
-        };
+            // Other tabs (will be re-rendered by their own filters, but need initial render)
+            updateDemographicsCharts(document.getElementById('demo-studio-filter').value);
+            updateUtilizationCharts(document.getElementById('util-studio-filter').value);
+            renderTrendCharts(document.getElementById('trends-studio-filter').value);
+            renderMembersTab(document.getElementById('member-studio-filter').value);
+            analyzeTrendAlerts(document.getElementById('trends-studio-filter').value);
+            renderInsights();
+        }
 
-
+        // ==================== OVERVIEW CHARTS ====================
         function renderStudioChart() {
-            // Guard against missing analysisResults
-             if (!analysisResults || !analysisResults.studioStats) return; 
             const { studioStats } = analysisResults;
             const ctx = document.getElementById('chart-studios');
             
@@ -1976,13 +1425,10 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        datalabels: getDatalabelConfig 
+                        datalabels: getDatalabelConfig(true) // Inside
                     },
                     scales: {
-                        y: { 
-                            beginAtZero: true,
-                            grace: '10%' 
-                        }
+                        y: { beginAtZero: true }
                     }
                 },
                 plugins: [ChartDataLabels]
@@ -1990,8 +1436,6 @@
         }
 
         function renderDailyChart() {
-             // Guard against missing analysisResults
-             if (!analysisResults || !analysisResults.dailyStats) return;
             const { dailyStats } = analysisResults;
             const ctx = document.getElementById('chart-daily');
             
@@ -2004,8 +1448,8 @@
                 data: {
                     labels: sorted.map(d => {
                         const date = new Date(d[0]);
-                         // Add check for valid date
-                        return !isNaN(date) ? date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) : ''; 
+                        date.setUTCHours(12); // Prevent timezone issues
+                        return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
                     }),
                     datasets: [{
                         label: 'Check-ins pro Tag',
@@ -2030,43 +1474,22 @@
             });
         }
 
+        // ==================== DEMOGRAPHICS CHARTS ====================
         function renderDemographicsCharts() {
-             // Guard against missing analysisResults
-             if (!analysisResults || !analysisResults.studioStats) return;
-            const { studioStats } = analysisResults;
-            const filterSelect = document.getElementById('demo-studio-filter');
-            filterSelect.innerHTML = '<option value="all">Alle Studios</option>';
-            Object.keys(studioStats).forEach(studio => {
-                const option = document.createElement('option');
-                option.value = studio;
-                option.textContent = studio;
-                filterSelect.appendChild(option);
-            });
-
+            // This function is just a setup, listener is in setupAllStudioFilters
             updateDemographicsCharts('all');
-
-            // Ensure listener is attached only once
-            if (!filterSelect.dataset.listener) {
-                filterSelect.addEventListener('change', (e) => {
-                    updateDemographicsCharts(e.target.value);
-                });
-                filterSelect.dataset.listener = 'true';
-            }
         }
 
-        // v5.6: Unbekannt entfernt
         function updateDemographicsCharts(studioFilter) {
-             // Guard against missing analysisResults
-            if (!analysisResults || !analysisResults.checkins) return;
-
             const checkins = studioFilter === 'all' 
                 ? analysisResults.checkins 
                 : analysisResults.checkins.filter(c => c.studio === studioFilter);
 
-            const genderCounts = { 'Männlich': 0, 'Weiblich': 0 }; // Unknown removed
+            // Gender chart
+            const genderCounts = { 'Männlich': 0, 'Weiblich': 0 };
             checkins.forEach(c => {
-                if (c.gender === 'Männlich' || c.gender === 'Weiblich') {
-                   genderCounts[c.gender]++; 
+                if (genderCounts[c.gender] !== undefined) {
+                    genderCounts[c.gender]++;
                 }
             });
             
@@ -2076,10 +1499,10 @@
             charts.gender = new Chart(genderCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Männer', 'Frauen'], // Unknown removed
+                    labels: ['Männer', 'Frauen'],
                     datasets: [{
                         data: [genderCounts['Männlich'], genderCounts['Weiblich']],
-                        backgroundColor: ['#1F2937', '#DC2626'] // Unknown color removed
+                        backgroundColor: ['#1F2937', '#DC2626']
                     }]
                 },
                 options: {
@@ -2091,7 +1514,7 @@
                                 const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
                                 if (sum === 0) return '0%';
                                 const percent = ((value / sum) * 100).toFixed(0);
-                                return percent > 5 ? `${percent}%` : ''; 
+                                return `${percent}%`;
                             },
                             color: '#fff',
                             font: { weight: 'bold', size: 16 }
@@ -2101,11 +1524,11 @@
                 plugins: [ChartDataLabels]
             });
 
+            // Age chart
             const ageCounts = {};
-            AGE_GROUPS.forEach(g => ageCounts[g] = 0);
-            
+            AGE_GROUPS.forEach(group => ageCounts[group] = 0);
             checkins.forEach(c => {
-                if (c.ageGroup) {
+                if (ageCounts[c.ageGroup] !== undefined) {
                     ageCounts[c.ageGroup]++;
                 }
             });
@@ -2113,10 +1536,10 @@
             const ageCtx = document.getElementById('chart-age');
             if (charts.age) charts.age.destroy();
             
-            charts.age = new Chart(ageCtx, { 
+            charts.age = new Chart(ageCtx, {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(ageCounts),
+                    labels: AGE_GROUPS,
                     datasets: [{
                         label: 'Check-ins',
                         data: Object.values(ageCounts),
@@ -2128,27 +1551,24 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        datalabels: getDatalabelConfig 
+                        datalabels: getDatalabelConfig(true) // Inside
                     },
                     scales: {
-                        y: { 
-                            beginAtZero: true,
-                            grace: '10%'
-                        }
+                        y: { beginAtZero: true }
                     }
                 },
                 plugins: [ChartDataLabels]
             });
 
+            // Age-Gender breakdown
             const ageGenderData = {};
-            AGE_GROUPS.forEach(g => {
-                ageGenderData[g] = { male: 0, female: 0 };
-            });
+            AGE_GROUPS.forEach(group => ageGenderData[group] = { male: 0, female: 0 });
 
             checkins.forEach(c => {
-                if (!c.ageGroup) return;
-                if (c.gender === 'Männlich') ageGenderData[c.ageGroup].male++;
-                else if (c.gender === 'Weiblich') ageGenderData[c.ageGroup].female++;
+                if (ageGenderData[c.ageGroup]) {
+                    if (c.gender === 'Männlich') ageGenderData[c.ageGroup].male++;
+                    else if (c.gender === 'Weiblich') ageGenderData[c.ageGroup].female++;
+                }
             });
 
             const ageGenderCtx = document.getElementById('chart-age-gender');
@@ -2157,7 +1577,7 @@
             charts.ageGender = new Chart(ageGenderCtx, {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(ageGenderData),
+                    labels: AGE_GROUPS,
                     datasets: [
                         {
                             label: 'Männer',
@@ -2174,113 +1594,76 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    indexAxis: 'y', // Horizontal
                     plugins: {
                         legend: { position: 'top' },
-                        datalabels: { 
-                            anchor: 'end',
-                            align: 'top',
-                            color: '#1F2937',
-                            font: { weight: 'bold', size: 10 }
-                        }
+                        datalabels: { display: false }
                     },
                     scales: {
-                        x: { stacked: false },
-                        y: { stacked: false, beginAtZero: true, grace: '10%' }
+                        x: { stacked: true, beginAtZero: true },
+                        y: { stacked: true }
                     }
-                },
-                plugins: [ChartDataLabels]
+                }
             });
+
+            // Studio comparison table
+            renderStudioComparisonTable();
         }
 
-        // v5.6: Unbekannt entfernt / FIX for ReferenceError
         function renderStudioComparisonTable() {
-             // Guard against missing analysisResults
-             if (!analysisResults || !analysisResults.checkins || !analysisResults.studioStats) return;
-            const { checkins, studioStats } = analysisResults;
+            const { checkins } = analysisResults;
             const tbody = document.getElementById('studio-comparison-table');
             tbody.innerHTML = '';
 
-            const studios = Object.keys(studioStats);
+            const studios = Object.values(MAIN_DOORS);
             
             studios.forEach(studio => {
                 const studioCheckins = checkins.filter(c => c.studio === studio);
                 const males = studioCheckins.filter(c => c.gender === 'Männlich').length;
                 const females = studioCheckins.filter(c => c.gender === 'Weiblich').length;
-                const total = males + females; 
+                const totalWithGender = males + females;
                 
                 const ages = studioCheckins.map(c => c.age).filter(a => a !== null);
                 const avgAge = ages.length > 0 ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : '-';
+                
+                const totalCheckins = studioCheckins.length;
+                if (totalCheckins === 0) return; // Don't show studios with 0 checkins
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="px-4 py-3 font-medium">${studio}</td>
-                    <td class="px-4 py-3">${studioStats[studio].toLocaleString('de-DE')}</td>
-                    <td class="px-4 py-3">${total > 0 ? ((males / total) * 100).toFixed(0) : 0}%</td>
-                    <td class="px-4 py-3">${total > 0 ? ((females / total) * 100).toFixed(0) : 0}%</td>
+                    <td class="px-4 py-3">${totalCheckins.toLocaleString('de-DE')}</td>
+                    <td class="px-4 py-3">${totalWithGender > 0 ? ((males / totalWithGender) * 100).toFixed(0) : 0}%</td>
+                    <td class="px-4 py-3">${totalWithGender > 0 ? ((females / totalWithGender) * 100).toFixed(0) : 0}%</td>
                     <td class="px-4 py-3">${avgAge}</td>
                 `;
                 tbody.appendChild(row);
             });
         }
 
-        function renderUtilizationCharts() {
-             // Guard against missing analysisResults
-             if (!analysisResults || !analysisResults.studioStats) return;
-            const { studioStats } = analysisResults;
-            const filterSelect = document.getElementById('util-studio-filter');
-            filterSelect.innerHTML = '<option value="all">Alle Studios (Gesamt)</option>';
-            Object.keys(studioStats).forEach(studio => {
-                const option = document.createElement('option');
-                option.value = studio;
-                option.textContent = studio;
-                filterSelect.appendChild(option);
-            });
-
-            updateUtilizationCharts('all');
-
-            // Ensure listener is attached only once
-            if (!filterSelect.dataset.listener) {
-                filterSelect.addEventListener('change', (e) => {
-                    updateUtilizationCharts(e.target.value);
-                    renderHeatmapTable(e.target.value);
-                });
-                 filterSelect.dataset.listener = 'true';
-            }
-        }
-
+        // ==================== UTILIZATION CHARTS ====================
         function updateUtilizationCharts(studioFilter) {
-             // Guard against missing analysisResults
-             if (!analysisResults || !analysisResults.checkins) return;
-
             const checkins = studioFilter === 'all' 
                 ? analysisResults.checkins 
                 : analysisResults.checkins.filter(c => c.studio === studioFilter);
 
-            const weekdayTotals = {};
-            const weekdayCounts = {};
+            const weekdayTotals = {}; // 0-Mo, 6-So
             
+            const uniqueDatesByWeekday = {};
+            for(let i=0; i<7; i++) {
+                uniqueDatesByWeekday[i] = new Set();
+                weekdayTotals[i] = 0;
+            }
+
             checkins.forEach(c => {
-                const day = c.day;
-                weekdayTotals[day] = (weekdayTotals[day] || 0) + 1;
+                weekdayTotals[c.day]++;
+                uniqueDatesByWeekday[c.day].add(c.dateKey);
             });
 
-            const uniqueDates = {};
-            checkins.forEach(c => {
-                const day = c.day;
-                 // Initialize set if it doesn't exist
-                if (!uniqueDates[day]) uniqueDates[day] = new Set(); 
-                uniqueDates[day].add(c.dateKey);
-            });
-
-            Object.keys(uniqueDates).forEach(day => {
-                weekdayCounts[day] = uniqueDates[day].size;
-            });
-
-            const dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
-            const avgData = [0, 1, 2, 3, 4, 5, 6].map(d => {
-                const total = weekdayTotals[d] || 0;
-                 // Ensure count is at least 1 to avoid division by zero
-                const count = weekdayCounts[d] || 1; 
+            const dayNames = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+            const avgData = dayNames.map((day, idx) => {
+                const total = weekdayTotals[idx] || 0;
+                const count = uniqueDatesByWeekday[idx].size || 1; // Avoid division by zero
                 return Math.round(total / count);
             });
 
@@ -2302,42 +1685,30 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        datalabels: getDatalabelConfig 
+                        datalabels: getDatalabelConfig(true) // Inside
                     },
                     scales: {
-                        y: { 
-                            beginAtZero: true,
-                            grace: '10%'
-                        }
+                        y: { beginAtZero: true }
                     }
                 },
                 plugins: [ChartDataLabels]
             });
+
+            // Heatmap
+            renderHeatmapTable(checkins);
         }
 
-        function renderHeatmapTable(studioFilter = 'all') {
-             // Guard against missing analysisResults
-             if (!analysisResults || !analysisResults.checkins) return;
-
-            const checkins = studioFilter === 'all' 
-                ? analysisResults.checkins 
-                : analysisResults.checkins.filter(c => c.studio === studioFilter);
-
-            const hourlyStats = {};
+        function renderHeatmapTable(checkins) {
+            const hourlyStats = {}; // key: "day-hour"
             checkins.forEach(c => {
-                 // Guard against invalid hour
-                if (c.day !== undefined && c.hour !== undefined) {
-                    const key = `${c.day}-${c.hour}`;
-                    hourlyStats[key] = (hourlyStats[key] || 0) + 1;
-                }
+                const key = `${c.day}-${c.hour}`;
+                hourlyStats[key] = (hourlyStats[key] || 0) + 1;
             });
 
             const table = document.getElementById('heatmap-table');
-            const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+            const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
-            const counts = Object.values(hourlyStats);
-             // Ensure maxCount is at least 1 even if counts is empty
-            const maxCount = counts.length > 0 ? Math.max(...counts) : 1; 
+            const maxCount = Math.max(...Object.values(hourlyStats), 1);
 
             let html = '<thead><tr class="heatmap-header"><th class="heatmap-cell">Uhrzeit</th>';
             dayNames.forEach(day => {
@@ -2346,16 +1717,14 @@
             html += '</tr></thead><tbody>';
 
             for (let hour = 6; hour <= 23; hour++) {
-                html += `<tr><td class="heatmap-cell font-bold">${hour}:00</td>`;
+                html += `<tr><td class="heatmap-cell font-bold">${String(hour).padStart(2, '0')}:00</td>`;
                 for (let day = 0; day < 7; day++) {
                     const key = `${day}-${hour}`;
                     const count = hourlyStats[key] || 0;
                     const intensity = count > 0 ? (count / maxCount) : 0;
-                     // Ensure intensity calculation is safe
-                    const safeIntensity = Math.min(Math.max(intensity, 0), 1);
-                    const bgColor = count === 0 ? '#f9fafb' : `rgba(220, 38, 38, ${0.1 + safeIntensity * 0.9})`;
-                    const textColor = safeIntensity > 0.6 ? '#fff' : '#1F2937';
-                    html += `<td class="heatmap-cell" style="background-color: ${bgColor}; color: ${textColor};">${count > 0 ? count : '-'}</td>`;
+                    const bgColor = count === 0 ? '#f9fafb' : `rgba(220, 38, 38, ${0.1 + intensity * 0.9})`;
+                    const textColor = intensity > 0.6 ? '#fff' : '#1F2937';
+                    html += `<td class="heatmap-cell" style="background-color: ${bgColor}; color: ${textColor};">${count > 0 ? count : ''}</td>`;
                 }
                 html += '</tr>';
             }
@@ -2364,121 +1733,801 @@
             table.innerHTML = html;
         }
 
-        function renderInsights() {
-            // Guard against missing analysisResults
-            if (!analysisResults || !analysisResults.checkins || !analysisResults.studioStats || !analysisResults.hourlyStats) {
-                document.getElementById('insights-container').innerHTML = '<p class="text-gray-500 text-center py-8">Nicht genügend Daten für Insights vorhanden.</p>';
+        // ==================== TRENDS TAB ====================
+        function renderTrendCharts(studioFilter) {
+            const labels = monthlyTrends.map(m => m.period);
+            
+            // Helper to get aggregated data
+            const getAggregatedData = (metric, subMetric = null, subSubMetric = null) => {
+                return monthlyTrends.map(m => {
+                    let total = 0;
+                    const studiosToSum = studioFilter === 'all' ? Object.values(m.studios) : [m.studios[studioFilter]];
+                    
+                    studiosToSum.forEach(studio => {
+                        if (!studio) return;
+                        if (subSubMetric) {
+                            total += studio[metric]?.[subMetric]?.[subSubMetric] || 0;
+                        } else if (subMetric) {
+                            total += studio[metric]?.[subMetric] || 0;
+                        } else {
+                            total += studio[metric] || 0;
+                        }
+                    });
+                    return total;
+                });
+            };
+
+            // Chart 1: Total Check-ins
+            renderChart(charts, 'trendsTotal', 'chart-trends-total', 'line', {
+                labels,
+                datasets: [{
+                    label: 'Check-ins',
+                    data: getAggregatedData('total'),
+                    borderColor: '#DC2626',
+                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            }, { legend: { display: false } });
+
+            // Chart 2: Gender
+            renderChart(charts, 'trendsGender', 'chart-trends-gender', 'line', {
+                labels,
+                datasets: [
+                    {
+                        label: 'Männer',
+                        data: getAggregatedData('male'),
+                        borderColor: '#1F2937',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Frauen',
+                        data: getAggregatedData('female'),
+                        borderColor: '#DC2626',
+                        tension: 0.4
+                    }
+                ]
+            });
+
+            // Chart 3: Male Age Groups
+            const maleAgeColors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
+            renderChart(charts, 'trendsMaleAge', 'chart-trends-male-age', 'line', {
+                labels,
+                datasets: AGE_GROUPS.map((group, idx) => ({
+                    label: group,
+                    data: getAggregatedData('maleAge', group),
+                    borderColor: maleAgeColors[idx],
+                    tension: 0.4
+                }))
+            });
+            
+            // Chart 4: Female Age Groups
+            const femaleAgeColors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
+            renderChart(charts, 'trendsFemaleAge', 'chart-trends-female-age', 'line', {
+                labels,
+                datasets: AGE_GROUPS.map((group, idx) => ({
+                    label: group,
+                    data: getAggregatedData('femaleAge', group),
+                    borderColor: femaleAgeColors[idx],
+                    tension: 0.4
+                }))
+            });
+            
+            // Update info
+            if (monthlyTrends.length > 0) {
+                document.getElementById('trends-period-count').textContent = monthlyTrends.length;
+                const firstMonth = monthlyTrends[0];
+                const lastMonth = monthlyTrends[monthlyTrends.length - 1];
+                document.getElementById('trends-date-range').textContent = `${firstMonth.period.split(' ')[0]} - ${lastMonth.period.split(' ')[0]}`;
+            }
+
+            // Analyze alerts
+            analyzeTrendAlerts(studioFilter);
+        }
+
+        // Generic Chart Renderer
+        function renderChart(chartCache, cacheKey, elementId, type, data, options = {}) {
+            const ctx = document.getElementById(elementId);
+            if (!ctx) return;
+            if (chartCache[cacheKey]) chartCache[cacheKey].destroy();
+            
+            chartCache[cacheKey] = new Chart(ctx, {
+                type,
+                data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', ...options.legend },
+                        datalabels: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true },
+                        ...options.scales
+                    }
+                }
+            });
+        }
+        
+        // ==================== TREND ALERTS ====================
+        function analyzeTrendAlerts(studioFilter) {
+            const positiveContainer = document.getElementById('trend-alerts-positive');
+            const negativeContainer = document.getElementById('trend-alerts-negative');
+            positiveContainer.innerHTML = '';
+            negativeContainer.innerHTML = '';
+
+            if (monthlyTrends.length < 3) {
+                positiveContainer.innerHTML = '<p class="text-gray-500 text-center py-4">Mind. 3 Monate Daten nötig.</p>';
+                negativeContainer.innerHTML = '<p class="text-gray-500 text-center py-4">Mind. 3 Monate Daten nötig.</p>';
                 return;
             }
 
-            const { checkins, studioStats, hourlyStats } = analysisResults;
+            const alerts = [];
+            const recent = monthlyTrends.slice(-3);
+            const period = `(${recent[0].period.split(' ')[0]} vs ${recent[2].period.split(' ')[0]})`;
+
+            // Helper to get aggregated value for a specific month
+            const getMonthlyValue = (month, metric, subMetric = null, subSubMetric = null) => {
+                let total = 0;
+                const studiosToSum = studioFilter === 'all' ? Object.values(month.studios) : [month.studios[studioFilter]];
+                
+                studiosToSum.forEach(studio => {
+                    if (!studio) return;
+                    if (subSubMetric) {
+                        total += studio[metric]?.[subMetric]?.[subSubMetric] || 0;
+                    } else if (subMetric) {
+                        total += studio[metric]?.[subMetric] || 0;
+                    } else {
+                        total += studio[metric] || 0;
+                    }
+                });
+                return total;
+            };
+
+            // Check Total
+            const totalStart = getMonthlyValue(recent[0], 'total');
+            const totalEnd = getMonthlyValue(recent[2], 'total');
+            const totalChange = calculatePercentChange(totalStart, totalEnd);
+            
+            document.getElementById('trends-total-percent').textContent = `Gesamttrend (letzte 3 Mon.): ${totalChange}`;
+            
+            // Check Genders
+            GENDERS.forEach(gender => {
+                const start = getMonthlyValue(recent[0], gender.toLowerCase());
+                const end = getMonthlyValue(recent[2], gender.toLowerCase());
+                if (start > 10 || end > 10) { // Min 10 checkins to be relevant
+                    alerts.push({
+                        title: `Trend ${gender}`,
+                        start,
+                        end
+                    });
+                }
+            });
+
+            // Check Age Groups
+            GENDERS.forEach(gender => {
+                AGE_GROUPS.forEach(group => {
+                    const metric = gender === 'Männlich' ? 'maleAge' : 'femaleAge';
+                    const start = getMonthlyValue(recent[0], metric, group);
+                    const end = getMonthlyValue(recent[2], metric, group);
+                    if (start > 5 || end > 5) { // Min 5 checkins
+                        alerts.push({
+                            title: `Trend ${gender} ${group}`,
+                            start,
+                            end
+                        });
+                    }
+                });
+            });
+
+            let positiveCount = 0;
+            let negativeCount = 0;
+
+            alerts.forEach(alert => {
+                const change = alert.end - alert.start;
+                const percent = calculatePercentChange(alert.start, alert.end);
+
+                if (Math.abs(change) < 5 || Math.abs(parseFloat(percent)) < 15) return; // Ignore small changes
+
+                const div = document.createElement('div');
+                div.className = 'p-3 bg-white rounded-lg shadow-sm border';
+                
+                if (change > 0) {
+                    // Positive
+                    div.innerHTML = `
+                        <h5 class="font-bold text-green-800">${alert.title}</h5>
+                        <p class="text-sm text-gray-700">Anstieg von ${alert.start} auf ${alert.end} Öffnungen</p>
+                        <p class="text-xs text-gray-500">${period} (${percent})</p>
+                    `;
+                    positiveContainer.appendChild(div);
+                    positiveCount++;
+                } else {
+                    // Negative
+                    div.innerHTML = `
+                        <h5 class="font-bold text-red-800">${alert.title}</h5>
+                        <p class="text-sm text-gray-700">Rückgang von ${alert.start} auf ${alert.end} Öffnungen</p>
+                        <p class="text-xs text-gray-500">${period} (${percent})</p>
+                    `;
+                    negativeContainer.appendChild(div);
+                    negativeCount++;
+                }
+            });
+
+            if (positiveCount === 0) {
+                positiveContainer.innerHTML = '<p class="text-gray-500 text-center py-4">Kein signifikantes Wachstum erkannt.</p>';
+            }
+            if (negativeCount === 0) {
+                negativeContainer.innerHTML = '<p class="text-gray-500 text-center py-4">Keine signifikanten Rückgänge erkannt.</p>';
+            }
+        }
+
+
+        // ==================== MEMBERS TAB ====================
+        function renderMembersTab(studioFilter) {
+            const checkins = studioFilter === 'all' 
+                ? analysisResults.checkins 
+                : analysisResults.checkins.filter(c => c.studio === studioFilter);
+
+            const memberStats = {};
+            checkins.forEach(c => {
+                const key = `${c.cusNumber} / ${c.name}`;
+                memberStats[key] = (memberStats[key] || 0) + 1;
+            });
+
+            const sortedMembers = Object.entries(memberStats).sort((a, b) => b[1] - a[1]);
+
+            // Top 20 Members
+            const topList = document.getElementById('top-members-list');
+            topList.innerHTML = '';
+            sortedMembers.slice(0, 20).forEach(([key, count]) => {
+                const [cus, ...nameParts] = key.split(' / ');
+                const name = nameParts.join(' / ');
+                
+                const div = document.createElement('div');
+                div.className = 'member-list-item';
+                div.innerHTML = `
+                    <span class="text-sm">
+                        <span class="font-medium">${name}</span>
+                        <span class="text-xs text-gray-500 block">${cus}</span>
+                    </span>
+                    <span class="font-bold text-red-600">${count} Check-ins</span>
+                `;
+                topList.appendChild(div);
+            });
+
+            if (sortedMembers.length === 0) {
+                topList.innerHTML = '<p class="text-gray-500 text-center py-4">Keine Mitgliederdaten im gewählten Zeitraum.</p>';
+            }
+        }
+
+        // ==================== COMPARE TAB ====================
+        function setupCompareTab() {
+            const periodTypes = document.querySelectorAll('.compare-period-type');
+            periodTypes.forEach(select => {
+                select.addEventListener('change', (e) => {
+                    const period = e.target.dataset.period; // 'A' or 'B'
+                    const type = e.target.value;
+                    document.getElementById(`year-selector-${period}`).classList.toggle('hidden', type === 'all');
+                    document.getElementById(`quarter-selector-${period}`).classList.toggle('hidden', type !== 'quarter');
+                    document.getElementById(`month-selector-${period}`).classList.toggle('hidden', type !== 'month');
+                });
+            });
+            
+            // Populate year selectors
+            const years = [...new Set(allCheckins.map(c => c.timestamp.getFullYear()))].sort((a, b) => b - a);
+            const yearHtml = years.map(y => `<option value="${y}">${y}</option>`).join('');
+            document.getElementById('year-select-A').innerHTML = yearHtml;
+            document.getElementById('year-select-B').innerHTML = yearHtml;
+            
+            // Run Compare
+            document.getElementById('run-compare-btn').addEventListener('click', renderCompareResults);
+        }
+        
+        function getCheckinsForPeriod(period) {
+            const periodType = document.getElementById(`period-type-${period}`).value;
+            
+            if (periodType === 'all') {
+                return [...allCheckins];
+            }
+            
+            const year = parseInt(document.getElementById(`year-select-${period}`).value);
+            
+            if (periodType === 'year') {
+                return allCheckins.filter(c => c.timestamp.getFullYear() === year);
+            } else if (periodType === 'quarter') {
+                const quarter = document.getElementById(`quarter-select-${period}`).value;
+                const qMap = { 'Q1': [0, 1, 2], 'Q2': [3, 4, 5], 'Q3': [6, 7, 8], 'Q4': [9, 10, 11] };
+                const months = qMap[quarter];
+                return allCheckins.filter(c => 
+                    c.timestamp.getFullYear() === year && months.includes(c.timestamp.getMonth())
+                );
+            } else if (periodType === 'month') {
+                const month = parseInt(document.getElementById(`month-select-${period}`).value) - 1;
+                return allCheckins.filter(c => 
+                    c.timestamp.getFullYear() === year && c.timestamp.getMonth() === month
+                );
+            }
+            return [];
+        }
+
+        function calculateSimpleStats(checkins) {
+            const stats = {
+                total: checkins.length,
+                male: 0,
+                female: 0,
+                avgDaily: 0,
+                ageGroups: {}
+            };
+            AGE_GROUPS.forEach(group => stats.ageGroups[group] = 0);
+            
+            const dailyCounts = {};
+            checkins.forEach(c => {
+                if (c.gender === 'Männlich') stats.male++;
+                else if (c.gender === 'Weiblich') stats.female++;
+                
+                if (stats.ageGroups[c.ageGroup] !== undefined) {
+                    stats.ageGroups[c.ageGroup]++;
+                }
+                
+                dailyCounts[c.dateKey] = (dailyCounts[c.dateKey] || 0) + 1;
+            });
+            
+            const daysCount = Object.keys(dailyCounts).length || 1;
+            stats.avgDaily = (stats.total / daysCount);
+            
+            return stats;
+        }
+
+        function renderCompareResults() {
+            const studioFilter = document.getElementById('compare-studio-filter').value;
+
+            let checkinsA = getCheckinsForPeriod('A');
+            let checkinsB = getCheckinsForPeriod('B');
+            
+            if (studioFilter !== 'all') {
+                checkinsA = checkinsA.filter(c => c.studio === studioFilter);
+                checkinsB = checkinsB.filter(c => c.studio === studioFilter);
+            }
+
+            const statsA = calculateSimpleStats(checkinsA);
+            const statsB = calculateSimpleStats(checkinsB);
+
+            const tbody = document.getElementById('compare-results-table');
+            tbody.innerHTML = '';
+
+            const renderRow = (metric, valueA, valueB, format = 'number') => {
+                const change = calculatePercentChange(valueA, valueB);
+                const isPositive = parseFloat(change) > 0;
+                const isNegative = parseFloat(change) < 0;
+                const changeColor = isPositive ? 'text-green-600' : (isNegative ? 'text-red-600' : 'text-gray-500');
+                
+                let valA = format === 'number' ? valueA.toLocaleString('de-DE') : valueA.toFixed(1);
+                let valB = format === 'number' ? valueB.toLocaleString('de-DE') : valueB.toFixed(1);
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium">${metric}</td>
+                        <td class="px-6 py-4">${valA}</td>
+                        <td class="px-6 py-4">${valB}</td>
+                        <td class="px-6 py-4 font-bold ${changeColor}">${change}</td>
+                    </tr>
+                `;
+            };
+
+            renderRow('Gesamt Check-ins', statsA.total, statsB.total);
+            renderRow('Ø Check-ins / Tag', statsA.avgDaily, statsB.avgDaily, 'float');
+            renderRow('Männer', statsA.male, statsB.male);
+            renderRow('Frauen', statsA.female, statsB.female);
+            
+            AGE_GROUPS.forEach(group => {
+                renderRow(`Altersgruppe: ${group}`, statsA.ageGroups[group], statsB.ageGroups[group]);
+            });
+
+            document.getElementById('compare-results-container').classList.remove('hidden');
+        }
+
+
+        // ==================== INSIGHTS TAB ====================
+        function renderInsights() {
+            const { checkins, studioStats } = analysisResults;
             const container = document.getElementById('insights-container');
-            container.innerHTML = ''; // Clear previous insights
+            container.innerHTML = '';
 
             const insights = [];
 
+            // 1. Gender Imbalance
             const totalMales = checkins.filter(c => c.gender === 'Männlich').length;
             const totalFemales = checkins.filter(c => c.gender === 'Weiblich').length;
-            
-            if (totalMales + totalFemales > 0) {
+            if ((totalMales + totalFemales) > 0) {
                 const avgFemalePercent = (totalFemales / (totalMales + totalFemales)) * 100;
-
                 Object.keys(studioStats).forEach(studio => {
+                    if (studioStats[studio] < 50) return; // Ignore small studios
                     const studioCheckins = checkins.filter(c => c.studio === studio);
                     const males = studioCheckins.filter(c => c.gender === 'Männlich').length;
                     const females = studioCheckins.filter(c => c.gender === 'Weiblich').length;
                     const total = males + females;
+                    if (total === 0) return;
                     
-                    if (total > 0) {
-                        const femalePercent = (females / total) * 100;
-                        if (Math.abs(femalePercent - avgFemalePercent) > 8) {
-                            const diff = femalePercent - avgFemalePercent;
-                            insights.push({
-                                type: diff < 0 ? 'warning' : 'info',
-                                icon: '👥',
-                                title: `${studio}: ${diff < 0 ? 'Wenig' : 'Viele'} Frauen`,
-                                description: `${femalePercent.toFixed(0)}% Frauen (Schnitt: ${avgFemalePercent.toFixed(0)}%)`,
-                                action: diff < 0 ? 'Gezielte Marketing-Kampagne für Frauen empfohlen' : 'Gute Geschlechterbalance beibehalten'
-                            });
-                        }
+                    const femalePercent = (females / total) * 100;
+
+                    if (Math.abs(femalePercent - avgFemalePercent) > 10) {
+                        const diff = femalePercent - avgFemalePercent;
+                        insights.push({
+                            type: diff < 0 ? 'warning' : 'info',
+                            icon: '👥',
+                            title: `${studio}: ${diff < 0 ? 'Unterdurchschnittlicher' : 'Überdurchschnittlicher'} Frauenanteil`,
+                            description: `${femalePercent.toFixed(0)}% Frauen (Studio-Schnitt: ${avgFemalePercent.toFixed(0)}%)`,
+                            action: diff < 0 ? 'Marketing-Aktionen für Frauen in diesem Studio prüfen.' : 'Stärken analysieren, evtl. auf andere Studios übertragen.'
+                        });
                     }
                 });
             }
 
+            // 2. Peak Hour
+            const { hourlyStats } = analysisResults;
             const hourTotals = {};
-            Object.entries(hourlyStats).forEach(([key, count]) => {
-                const hour = key.split('-')[1];
-                // Ensure hour is a valid key
-                if(hour !== undefined) { 
+            for(let day=0; day<7; day++) {
+                for(let hour=6; hour<24; hour++) {
+                    const key = `${day}-${hour}`;
+                    const count = hourlyStats[key] || 0;
                     hourTotals[hour] = (hourTotals[hour] || 0) + count;
                 }
-            });
-            const peakHourEntry = Object.entries(hourTotals).sort((a, b) => b[1] - a[1])[0];
-            if (peakHourEntry) {
-                 const peakHour = peakHourEntry[0]; // Get the hour string
-                 insights.push({
+            }
+            const peakHour = Object.entries(hourTotals).sort((a, b) => b[1] - a[1])[0];
+            if (peakHour) {
+                insights.push({
                     type: 'success',
                     icon: '⏰',
-                    title: `Peak Hour: ${peakHour}:00 Uhr`,
-                    description: `Stärkste Stunde im gesamten Zeitraum`,
-                    action: 'Personal-Planung entsprechend anpassen'
+                    title: `Beliebteste Zeit: ${peakHour[0]}:00 - ${peakHour[0]}:59 Uhr`,
+                    description: `Die Stunde um ${peakHour[0]} Uhr ist über alle Wochentage hinweg die meistbesuchte.`,
+                    action: 'Stelle sicher, dass zu dieser Zeit ausreichend Personal für Betreuung und Sauberkeit vor Ort ist.'
                 });
             }
-
-            const ageGroupCounts = {};
-            AGE_GROUPS.forEach(g => ageGroupCounts[g] = 0);
-            checkins.forEach(c => {
-                if(c.ageGroup) ageGroupCounts[c.ageGroup]++;
-            });
             
-            const topAgeGroupEntry = Object.entries(ageGroupCounts).sort((a, b) => b[1] - a[1])[0];
-            if (topAgeGroupEntry && checkins.length > 0) {
-                 const topAgeGroup = topAgeGroupEntry[0]; // Get the group name
-                 const topAgeGroupCount = topAgeGroupEntry[1]; // Get the count
+            // 3. Underused Age Group
+            const ageGroupTotals = {};
+            AGE_GROUPS.forEach(group => ageGroupTotals[group] = 0);
+            checkins.forEach(c => {
+                if (ageGroupTotals[c.ageGroup] !== undefined) {
+                    ageGroupTotals[c.ageGroup]++;
+                }
+            });
+            const sortedAgeGroups = Object.entries(ageGroupTotals).sort((a,b) => a[1] - b[1]);
+            const weakestGroup = sortedAgeGroups[0];
+            if (weakestGroup && weakestGroup[1] > 0) {
                  insights.push({
                     type: 'info',
-                    icon: '🎂',
-                    title: `Stärkste Altersgruppe: ${topAgeGroup}`,
-                    description: `Diese Gruppe macht ${((topAgeGroupCount/checkins.length)*100).toFixed(0)}% der Check-ins aus`,
-                    action: 'Angebote für diese Zielgruppe prüfen/stärken'
+                    icon: '📈',
+                    title: `Wachstumspotenzial: Gruppe ${weakestGroup[0]}`,
+                    description: `Die Altersgruppe ${weakestGroup[0]} ist aktuell am schwächsten vertreten.`,
+                    action: `Prüfe, ob gezielte Angebote (z.B. "Senioren-Fit 60+" oder "Jugend-Rabatt <20") sinnvoll sind.`
                 });
             }
 
+            // Render
             const typeStyles = {
-                warning: 'bg-yellow-50 border-yellow-200',
-                info: 'bg-blue-50 border-blue-200',
-                success: 'bg-green-50 border-green-200'
+                warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+                info: 'bg-blue-50 border-blue-200 text-blue-800',
+                success: 'bg-green-50 border-green-200 text-green-800'
             };
 
-            if (insights.length > 0) {
-                insights.forEach(insight => {
-                    const div = document.createElement('div');
-                    div.className = `p-4 rounded-lg border-2 ${typeStyles[insight.type]}`;
-                    div.innerHTML = `
-                        <div class="flex items-start">
-                            <div class="text-3xl mr-4">${insight.icon}</div>
-                            <div class="flex-1">
-                                <h4 class="font-bold text-lg mb-1">${insight.title}</h4>
-                                <p class="text-sm text-gray-700 mb-2">${insight.description}</p>
-                                <p class="text-xs text-gray-600">📍 <strong>Empfehlung:</strong> ${insight.action}</p>
-                            </div>
+            insights.forEach(insight => {
+                const div = document.createElement('div');
+                div.className = `p-4 rounded-lg border-2 ${typeStyles[insight.type]}`;
+                div.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="text-3xl mr-4">${insight.icon}</div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-lg mb-1">${insight.title}</h4>
+                            <p class="text-sm text-gray-700 mb-2">${insight.description}</p>
+                            <p class="text-xs text-gray-600">📍 <strong>Empfehlung:</strong> ${insight.action}</p>
                         </div>
-                    `;
-                    container.appendChild(div);
-                });
-            } else {
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            if (insights.length === 0) {
                 container.innerHTML = '<p class="text-gray-500 text-center py-8">Keine besonderen Auffälligkeiten gefunden. Alle Metriken im normalen Bereich! ✅</p>';
             }
         }
 
 
+        // ==================== GITHUB SYNC ====================
+        function setupGitHubSync() {
+            document.getElementById('sync-github-btn').addEventListener('click', () => {
+                loadGitHubConfig();
+                showModal('github-sync-modal');
+            });
+            document.getElementById('github-load-btn').addEventListener('click', loadFromGitHub);
+            document.getElementById('github-save-btn').addEventListener('click', saveToGitHub);
+        }
+
+        function loadGitHubConfig() {
+            const config = JSON.parse(localStorage.getItem('githubConfig'));
+            if (config) {
+                document.getElementById('github-owner').value = config.owner || '';
+                document.getElementById('github-repo').value = config.repo || '';
+                GITHUB_CONFIG.owner = config.owner;
+                GITHUB_CONFIG.repo = config.repo;
+            }
+        }
+
+        function updateGitHubConfig() {
+            GITHUB_CONFIG.owner = document.getElementById('github-owner').value.trim();
+            GITHUB_CONFIG.repo = document.getElementById('github-repo').value.trim();
+            GITHUB_CONFIG.token = document.getElementById('github-token').value.trim();
+            
+            localStorage.setItem('githubConfig', JSON.stringify({
+                owner: GITHUB_CONFIG.owner,
+                repo: GITHUB_CONFIG.repo
+            }));
+        }
+
+        function setGitHubStatus(status, isError = false) {
+            const statusEl = document.getElementById('github-status');
+            const errorEl = document.getElementById('github-error');
+            
+            statusEl.value = status;
+            errorEl.classList.add('hidden');
+            
+            if (isError) {
+                errorEl.textContent = status;
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        async function loadFromGitHub() {
+            updateGitHubConfig();
+            setGitHubStatus('Lade Daten...');
+            
+            const { owner, repo, token, dataFile } = GITHUB_CONFIG;
+            if (!owner || !repo || !token) {
+                setGitHubStatus('Fehler: Besitzer, Repo und Token sind erforderlich.', true);
+                return;
+            }
+
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${dataFile}`;
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3.raw' // Get raw content
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Fehler: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.allCheckins && data.monthlyTrends) {
+                    allCheckins = data.allCheckins || [];
+                    monthlyTrends = data.monthlyTrends || [];
+                    
+                    // v5.10: Re-hydrate Date objects
+                    allCheckins.forEach(c => {
+                        c.timestamp = new Date(c.timestamp);
+                    });
+                    
+                    // Find latest date for merge logic
+                    if (allCheckins.length > 0) {
+                        lastEventDate = new Date(Math.max(...allCheckins.map(c => c.timestamp)));
+                    } else {
+                        lastEventDate = null;
+                    }
+
+                    isLoadedFromGitHub = true;
+                    setGitHubStatus(`Geladen! (${allCheckins.length} Einträge)`);
+                    
+                    // Now get SHA for saving
+                    await getFileSha(); 
+
+                    // Process and render
+                    filteredCheckins = [...allCheckins];
+                    processAnalysis();
+                    setupTimeFilters();
+                    setupAllStudioFilters();
+                    setupCompareTab();
+                    
+                    document.getElementById('initial-load-section').classList.add('hidden');
+                    document.getElementById('initial-loading').classList.add('hidden');
+                    document.getElementById('results-section').classList.remove('hidden');
+                    document.getElementById('time-filter-section').classList.remove('hidden');
+                    document.getElementById('export-btn').classList.remove('hidden');
+                    document.getElementById('sync-github-btn').classList.remove('hidden');
+                    document.getElementById('add-data-btn').classList.remove('hidden');
+                    
+                    setTimeout(() => closeModal('github-sync-modal'), 1000);
+                } else {
+                    setGitHubStatus('Fehler: Geladene Daten haben ein ungültiges Format.', true);
+                }
+
+            } catch (err) {
+                console.error('GitHub Load Error:', err);
+                setGitHubStatus(err.message, true);
+                document.getElementById('initial-loading').classList.add('hidden');
+                document.getElementById('initial-load-section').classList.remove('hidden');
+            }
+        }
+
+        async function getFileSha() {
+            // Helper to get the SHA of the file (needed for updating)
+            const { owner, repo, token, dataFile } = GITHUB_CONFIG;
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${dataFile}`;
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        console.log('Data file not found. Will create new one.');
+                        GITHUB_CONFIG.sha = null; // File doesn't exist, will create
+                        return;
+                    }
+                    throw new Error(`SHA Fetch Error: ${response.statusText}`);
+                }
+                const data = await response.json();
+                GITHUB_CONFIG.sha = data.sha;
+                console.log('File SHA loaded:', data.sha);
+            } catch (err) {
+                console.error(err);
+                setGitHubStatus(err.message, true);
+            }
+        }
+
+        async function saveToGitHub() {
+            updateGitHubConfig();
+            setGitHubStatus('Speichere...');
+            
+            const { owner, repo, token, dataFile, sha } = GITHUB_CONFIG;
+            if (!owner || !repo || !token) {
+                setGitHubStatus('Fehler: Besitzer, Repo und Token sind erforderlich.', true);
+                return;
+            }
+
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${dataFile}`;
+            
+            const dataToSave = JSON.stringify({ allCheckins, monthlyTrends }, null, 2);
+            const content = btoa(unescape(encodeURIComponent(dataToSave))); // UTF-8 safe btoa
+            
+            const body = {
+                message: `Update SAMS GYM analysis data (${new Date().toISOString()})`,
+                content: content,
+                sha: sha // Include SHA if updating existing file
+            };
+            
+            // If SHA is null, it's a new file, don't send SHA
+            if (!body.sha) {
+                delete body.sha;
+            }
+
+            console.log('Saving to GitHub...', { url, sha: body.sha, size: dataToSave.length });
+
+            try {
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                console.log('GitHub Save Response Status:', response.status);
+
+                // v5.9: More robust success check
+                if (response.ok || response.status === 200 || response.status === 201) {
+                    const result = await response.json();
+                    GITHUB_CONFIG.sha = result.content.sha; // Update SHA for next save
+                    
+                    setGitHubStatus(`Gespeichert! (${allCheckins.length} Einträge)`);
+                    console.log('Save successful. New SHA:', result.content.sha);
+                    
+                    setTimeout(() => closeModal('github-sync-modal'), 1000);
+                } else {
+                    const error = await response.json();
+                    console.error('GitHub Save Error:', error);
+                    throw new Error(`${response.status} ${response.statusText}: ${error.message}`);
+                }
+
+            } catch (err) {
+                console.error(err);
+                setGitHubStatus(err.message, true);
+            }
+        }
+
+
+        // ==================== HELPER FUNCTIONS ====================
+        function parseGermanDate(dateString) {
+            // Versucht TT.MM.JJJJ HH:MM:SS
+            const parts = dateString.match(/(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})/);
+            if (parts) {
+                // new Date(YYYY, MM-1, DD, HH, MM, SS)
+                return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+            }
+            
+            // Fallback: Versucht Standard-Parsing (z.B. für ISO oder US-Formate)
+            const date = new Date(dateString);
+            if (!isNaN(date)) {
+                return date;
+            }
+            
+            return null; // Ungültiges Format
+        }
+
+        function extractGender(name) {
+            if (name.startsWith('Herr ')) return 'Männlich';
+            if (name.startsWith('Frau ')) return 'Weiblich';
+            return 'Unknown';
+        }
+
+        function calculateAge(birthdateStr) {
+            if (!birthdateStr) return null;
+            
+            let birth;
+            // Versucht TT.MM.JJJJ
+            let parts = birthdateStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+            if (parts) {
+                birth = new Date(parts[3], parts[2] - 1, parts[1]);
+            } else {
+                // Fallback: Versucht Standard-Parsing (z.B. YYYY-MM-DD)
+                birth = new Date(birthdateStr);
+            }
+
+            if (isNaN(birth)) return null;
+
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        function getAgeGroup(age) {
+            if (age === null) return null;
+            if (age < 20) return '<20';
+            if (age < 40) return '20-40';
+            if (age < 60) return '40-60';
+            return '60+';
+        }
+
+        function formatDate(date) {
+            if (!date) return '-';
+            return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function calculatePercentChange(start, end) {
+            if (start === 0) {
+                return end > 0 ? '+∞%' : '0.0%';
+            }
+            const change = ((end - start) / start) * 100;
+            return (change > 0 ? '+' : '') + change.toFixed(1) + '%';
+        }
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            setupInitialLoad();
+            setupFileHandlers();
+            setupTabs();
+            setupGitHubSync();
+            
+            // Lade GitHub-Config aus LocalStorage (aber nicht den Token)
+            loadGitHubConfig(); 
+        });
+
         // ==================== TAB SWITCHING ====================
         function setupTabs() {
             const tabButtons = document.querySelectorAll('.tab-button');
             tabButtons.forEach(button => {
-                 // Prevent attaching multiple listeners
-                 if (button.dataset.listenerAttached) return; 
-
                 button.addEventListener('click', () => {
                     const targetTab = button.dataset.tab;
                     
@@ -2486,372 +2535,25 @@
                     button.classList.add('active');
                     
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                    const targetContent = document.getElementById(`tab-${targetTab}`);
-                    if (targetContent) {
-                        targetContent.classList.add('active');
-                    } else {
-                         console.error(`Tab content not found for id: tab-${targetTab}`);
+                    document.getElementById(`tab-${targetTab}`).classList.add('active');
+
+                    if (targetTab === 'compare' && allCheckins.length > 0) {
+                        setupCompareTab(); // Lazy-init compare tab
                     }
                 });
-                 button.dataset.listenerAttached = 'true'; // Mark as attached
             });
-        }
-
-        // ==================== EXPORT & SYNC ====================
-        function setupExport() {
-            document.getElementById('export-btn').addEventListener('click', () => {
-                 // Ensure data exists before exporting
-                if (!lastLoadedTimestamp && (!allCheckins || allCheckins.length === 0)) {
-                    alert("Keine Daten zum Exportieren vorhanden.");
-                    return;
-                }
-                const data = {
-                    lastLoadedTimestamp: lastLoadedTimestamp,
-                    // Ensure timestamps are ISO strings for JSON
-                    allCheckins: allCheckins.map(c => ({...c, timestamp: c.timestamp.toISOString()})) 
-                };
-                const dataStr = JSON.stringify(data, null, 2);
-                const blob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `sams-gym-analysis-${new Date().toISOString().split('T')[0]}.json`;
-                document.body.appendChild(a); // Required for Firefox
-                a.click();
-                document.body.removeChild(a); // Clean up
-                URL.revokeObjectURL(url); // Clean up blob URL
-            });
-
-            document.getElementById('sync-github-btn').addEventListener('click', () => {
-                document.getElementById('github-modal').classList.add('active');
-            });
-            
-            setupGitHubModal();
-        }
-
-        // ==================== GITHUB SYNC ====================
-        function setupGitHubModal() {
-            try {
-                const savedConfig = localStorage.getItem('githubConfig');
-                if (savedConfig) {
-                    const parsedConfig = JSON.parse(savedConfig);
-                    // Assign properties safely
-                    githubConfig.owner = parsedConfig.owner || 'sam-ux-sack'; 
-                    githubConfig.repo = parsedConfig.repo || 'sams-gym-data';
-                    document.getElementById('github-owner').value = githubConfig.owner;
-                    document.getElementById('github-repo').value = githubConfig.repo;
-                }
-            } catch (e) {
-                console.error("Error loading GitHub config from localStorage:", e);
-                // Use default values if loading fails
-                githubConfig.owner = 'sam-ux-sack';
-                githubConfig.repo = 'sams-gym-data';
-            }
-            githubConfig.token = null; // Always clear token on load
-            document.getElementById('github-token').value = '';
-
-            updateDataStatus('Nicht geladen');
-
-             // Ensure listeners are attached only once
-            const loadBtn = document.getElementById('github-load-btn');
-            const saveBtn = document.getElementById('github-save-btn');
-
-            if (!loadBtn.dataset.listener) {
-                loadBtn.addEventListener('click', loadFromGitHub);
-                loadBtn.dataset.listener = 'true';
-            }
-            if (!saveBtn.dataset.listener) {
-                saveBtn.addEventListener('click', saveToGitHub);
-                 saveBtn.dataset.listener = 'true';
-            }
         }
         
-        // v5.7: .trim() hinzugefügt, um Leerzeichen-Fehler zu vermeiden
-        function updateGitHubConfig() {
-             try {
-                githubConfig.owner = document.getElementById('github-owner').value.trim(); // <-- Trim added
-                githubConfig.repo = document.getElementById('github-repo').value.trim(); // <-- Trim added
-                githubConfig.token = document.getElementById('github-token').value.trim(); // <-- Trim added
-                
-                // Save only owner and repo, not the token
-                localStorage.setItem('githubConfig', JSON.stringify({
-                    owner: githubConfig.owner,
-                    repo: githubConfig.repo
-                }));
-            } catch (e) {
-                 console.error("Error updating or saving GitHub config:", e);
-                 // Handle potential errors (e.g., localStorage full)
-            }
-        }
-
-        function setGitHubLoading(isLoading, text = 'Aktion wird ausgeführt...') {
-            document.getElementById('github-loading').classList.toggle('hidden', !isLoading);
-            document.getElementById('github-loading-text').textContent = text;
-            document.getElementById('github-load-btn').disabled = isLoading;
-            document.getElementById('github-save-btn').disabled = isLoading;
-            document.getElementById('github-error').classList.add('hidden'); // Hide error when loading starts
-        }
-
-        function showGitHubError(message) {
-            setGitHubLoading(false); // Ensure loading indicator is off
-            const errorEl = document.getElementById('github-error');
-            errorEl.textContent = `Fehler: ${message}`;
-            errorEl.classList.remove('hidden');
-        }
-
-        function updateDataStatus(status) {
-            const statusEl = document.getElementById('github-status');
-            statusEl.value = status;
-            // Reset classes before applying new ones
-            statusEl.classList.remove('text-green-600', 'text-yellow-600', 'text-gray-600', 'font-bold');
-            
-            if (status.startsWith('Geladen')) {
-                statusEl.classList.add('text-green-600', 'font-bold');
-            } else if (status.startsWith('Lokal')) {
-                statusEl.classList.add('text-yellow-600', 'font-bold');
-            } else {
-                 statusEl.classList.add('text-gray-600'); // Default style
-            }
-        }
-
-        async function makeGitHubRequest(url, method, body = null) {
-            updateGitHubConfig(); // Ensures latest values (and trims them)
-            const { token } = githubConfig;
-            
-            // Check for token *after* updateGitHubConfig
-            if (!token) {
-                showGitHubError('Kein GitHub Token angegeben.');
-                return null; // Return null to indicate failure
-            }
-
-            const headers = {
-                'Authorization': `token ${token}`, 
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-            };
-
-            try {
-                const response = await fetch(url, {
-                    method: method,
-                    headers: headers,
-                    body: body ? JSON.stringify(body) : null,
-                    cache: 'no-cache' // Prevent browser caching API requests
-                });
-
-                // Check for specific error statuses first
-                if (response.status === 401) {
-                    throw new Error('Bad credentials'); // Specific error for token issues
-                }
-                 if (response.status === 404) {
-                    throw new Error('Not Found'); // Specific error for missing repo/file
-                 }
-                 if (response.status === 403) {
-                     const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
-                     if (rateLimitRemaining === '0') {
-                        throw new Error('API rate limit exceeded');
-                     } else {
-                        throw new Error('Forbidden - Prüfe Token-Berechtigungen und SSO.');
-                     }
-                 }
-                  if (response.status === 409) {
-                     throw new Error('Conflict - SHA does not match'); // Specific error for update conflicts
-                  }
-
-                // If not an expected error, check generic !response.ok
-                if (!response.ok) {
-                    // Try to parse error message from GitHub
-                    let errorMsg = `${response.status} ${response.statusText}`;
-                    try {
-                        const errorJson = await response.json();
-                        errorMsg = errorJson.message || errorMsg;
-                    } catch (e) { /* Ignore parsing error */ }
-                    throw new Error(errorMsg);
-                }
-                
-                // Handle successful responses (including 204 No Content)
-                if (response.status === 204) { 
-                    return { success: true, data: {} }; 
-                } else {
-                     // Assume JSON for other success codes (200, 201)
-                     try {
-                        const data = await response.json();
-                        return { success: true, data: data };
-                     } catch (e) {
-                         throw new Error("Ungültige JSON-Antwort von GitHub erhalten.");
-                     }
-                }
-
-            } catch (err) {
-                console.error('GitHub API Error:', err);
-                 // Map specific errors
-                 if (err.message === 'Bad credentials') {
-                    showGitHubError('Ungültiger Token oder fehlende Berechtigungen.');
-                 } else if (err.message === 'Not Found') {
-                    showGitHubError('Repository oder Datei nicht gefunden. Prüfe Namen und Pfad.');
-                 } else if (err.message === 'API rate limit exceeded') {
-                    showGitHubError('Zu viele Anfragen an GitHub. Bitte später erneut versuchen.');
-                 } else if (err.message === 'Conflict - SHA does not match') {
-                     showGitHubError('Konflikt: Datei wurde auf GitHub geändert. Bitte zuerst laden.');
-                 } else if (err.message === 'Forbidden - Prüfe Token-Berechtigungen und SSO.') {
-                     showGitHubError('Zugriff verweigert. Prüfe Token-Berechtigungen (repo scope) und evtl. SSO-Autorisierung.');
-                 }
-                 else {
-                     showGitHubError(err.message || 'Unbekannter GitHub API Fehler.');
-                 }
-                return null; // Indicate failure
-            }
-        }
-
-
-        async function loadFromGitHub() {
-            setGitHubLoading(true, 'Lade Daten von GitHub...');
-            const { owner, repo, filePath } = githubConfig;
-             // Add timestamp for cache busting
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?t=${Date.now()}`; 
-
-            const result = await makeGitHubRequest(url, 'GET');
-            
-            githubDataSha = null; // Reset SHA before attempting load
-
-            if (result && result.success && result.data.type === 'file' && result.data.encoding === 'base64') {
-                githubDataSha = result.data.sha; // Store SHA *after* successful fetch
-                
-                try {
-                    const content = atob(result.data.content);
-                    const data = JSON.parse(content);
-    
-                    // Basic validation of loaded data structure
-                    if (!data || typeof data !== 'object') {
-                        throw new Error('Geladene Daten haben kein gültiges JSON-Format.');
-                    }
-
-                    allCheckins = (data.allCheckins || []).map(c => ({
-                        ...c,
-                         // Robust date parsing: handle potential invalid strings
-                        timestamp: c.timestamp ? new Date(c.timestamp) : null 
-                    })).filter(c => c.timestamp && !isNaN(c.timestamp)); // Filter out entries with invalid dates
-
-                    lastLoadedTimestamp = data.lastLoadedTimestamp; // Can be null/undefined
-
-                    if (!Array.isArray(allCheckins)) { // Should be redundant due to map/filter, but keep as safety
-                        throw new Error('`allCheckins` in geladenen Daten ist kein Array.');
-                    }
-                    
-                    allCheckins.sort((a, b) => a.timestamp - b.timestamp); // Sort by valid Date objects
-                    
-                    setGitHubLoading(false);
-                    updateDataStatus(`Geladen von GitHub (${allCheckins.length} Einträge)`);
-                    closeModal('github-modal');
-                    
-                    document.getElementById('initial-load-section').classList.add('hidden');
-                    document.getElementById('upload-section').classList.add('hidden');
-                    document.getElementById('results-section').classList.remove('hidden');
-                    document.getElementById('time-filter-section').classList.remove('hidden');
-                    document.getElementById('export-btn').classList.remove('hidden');
-                    document.getElementById('add-data-btn').classList.remove('hidden');
-    
-                    // Run analysis only if data was successfully processed
-                    generateMonthlyTrends();
-                    filteredCheckins = [...allCheckins];
-                    processAnalysis(); // This calls renderResults internally
-                    // Setup filters *after* data is loaded and processed
-                    setupTimeFilters(); 
-                    setupTrendsFilters();
-                    renderTrendCharts('all'); // Initial render
-                    analyzeTrendAlerts(); // Initial analysis
-
-                } catch (parseError) {
-                    console.error("Error parsing loaded data:", parseError);
-                    showGitHubError(`Fehler beim Verarbeiten der geladenen Daten: ${parseError.message}`);
-                    githubDataSha = null; 
-                    setGitHubLoading(false); 
-                    // Keep user in modal
-                }
-
-            } else {
-                 // Error was shown by makeGitHubRequest or it wasn't a file
-                 if (result && result.success) { // Handle case where API call succeeded but wasn't a file
-                    showGitHubError('Der angegebene Pfad ist keine Datei.');
-                 }
-                 setGitHubLoading(false); // Ensure loading is stopped
-                 githubDataSha = null; // Reset SHA on any load failure
-            }
-        }
-
-
-        async function saveToGitHub() {
-            if (!allCheckins || allCheckins.length === 0) {
-                showGitHubError('Keine Daten zum Speichern vorhanden.');
-                return;
-            }
-            
-            setGitHubLoading(true, 'Speichere Daten auf GitHub...');
-            const { owner, repo, filePath } = githubConfig; // Use trimmed values
-            
-            const dataToSave = {
-                lastLoadedTimestamp: lastLoadedTimestamp,
-                // Convert Date objects back to ISO strings for saving
-                allCheckins: allCheckins.map(c => ({...c, timestamp: c.timestamp.toISOString()})) 
-            };
-            
-            let content;
-            try {
-                // Use TextEncoder for robust UTF-8 handling before base64
-                const jsonString = JSON.stringify(dataToSave);
-                const uint8Array = new TextEncoder().encode(jsonString);
-                // Convert Uint8Array to binary string for btoa
-                let binaryString = '';
-                uint8Array.forEach((byte) => {
-                    binaryString += String.fromCharCode(byte);
-                });
-                content = btoa(binaryString);
-            } catch (e) {
-                console.error("Error encoding data for saving:", e);
-                showGitHubError("Fehler beim Vorbereiten der Daten zum Speichern.");
-                setGitHubLoading(false);
-                return;
-            }
-            
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
-
-            const body = {
-                message: `SAMS GYM Analytics Update - ${new Date().toISOString()}`,
-                content: content,
-                 // Send the SHA if we have it (for updating the file)
-                sha: githubDataSha 
-            };
-
-            const result = await makeGitHubRequest(url, 'PUT', body);
-            
-            // Check for success based on the API call result
-            if (result && result.success) {
-                 // Update SHA *only* if the response contains content info (usually does on success)
-                if (result.data && result.data.content && result.data.content.sha) {
-                    githubDataSha = result.data.content.sha; 
-                }
-                setGitHubLoading(false);
-                updateDataStatus(`Gespeichert! (${allCheckins.length} Einträge)`);
-                closeModal('github-modal');
-            } else {
-                 // Error already shown by makeGitHubRequest
-                 setGitHubLoading(false); // Ensure loading is stopped on failure
-            }
-        }
-
-
-        // ==================== INIT ====================
-        document.addEventListener('DOMContentLoaded', () => {
-             // Basic error handling for critical elements
-            try {
-                setupInitialLoad();
-                setupFileHandlers();
-                setupTabs();
-                setupExport();
-            } catch (error) {
-                 console.error("Initialization Error:", error);
-                 // Display a user-friendly error message if possible
-                 document.body.innerHTML = `<div style="padding: 20px; text-align: center; color: red;">Initialisierungsfehler. Bitte lade die Seite neu. Details: ${error.message}</div>`;
-            }
+        // ==================== EXPORT ====================
+        document.getElementById('export-btn').addEventListener('click', () => {
+            const dataStr = JSON.stringify({ allCheckins, monthlyTrends }, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sams-gym-analysis-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
         });
     </script>
 </body>
