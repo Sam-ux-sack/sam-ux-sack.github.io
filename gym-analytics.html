@@ -674,9 +674,9 @@
         // ==================== INITIAL LOAD ====================
         function setupInitialLoad() {
             // Check for local save first
-            const savedState = localStorage.getItem(CONFIG.LOCAL_STORAGE_KEY);
-            if (savedState) {
-                try {
+            try { // v6.0: Added try-catch
+                const savedState = localStorage.getItem(CONFIG.LOCAL_STORAGE_KEY);
+                if (savedState) {
                     const parsedState = JSON.parse(LZString.decompressFromUTF16(savedState)); // Use correct decompression
                     if (parsedState && parsedState.timestamp) {
                          appState.localSaveTimestamp = new Date(parsedState.timestamp);
@@ -685,10 +685,10 @@
                     } else {
                          localStorage.removeItem(CONFIG.LOCAL_STORAGE_KEY);
                     }
-                } catch(e) {
-                     console.error("Error parsing local save:", e);
-                     localStorage.removeItem(CONFIG.LOCAL_STORAGE_KEY);
                 }
+            } catch(e) {
+                 console.error("Error checking local save on init:", e);
+                 localStorage.removeItem(CONFIG.LOCAL_STORAGE_KEY); // Clear potentially corrupt data
             }
 
             DOM.get('load-local-btn').addEventListener('click', () => {
@@ -794,7 +794,7 @@
 
          function loadFromLocalStorage() {
             DOM.show('initial-loading'); // Show loading indicator
-            DOM.setText('initial-loading p', 'Lade lokale Daten...'); // Update text
+            DOM.setText(DOM.get('initial-loading').querySelector('p'), 'Lade lokale Daten...'); // Update text using DOM helper
             DOM.hide('initial-load-section');
 
             setTimeout(() => { // Simulate async loading & prevent UI freeze
@@ -875,7 +875,41 @@
 
         function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
 
-        function handleFileSelect(file, type) { /* ... (keep existing file select logic) ... */ }
+        // Updated handleFileSelect to use DOM helper
+        function handleFileSelect(file, type) {
+            if (!file || !file.name.endsWith('.csv')) {
+                DOM.setStatus('Bitte eine CSV-Datei auswählen!', 'error');
+                return;
+            }
+
+            const statusEl = DOM.get(`${type}-status`);
+            statusEl.textContent = `✓ ${file.name}`;
+            statusEl.className = 'text-xs mt-2 text-green-600 dark:text-green-400'; // Updated class for dark mode
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true, // Important for potentially empty rows
+                complete: (results) => {
+                    if (type === 'contacts') {
+                        contactsData = results.data;
+                        console.log('Contacts loaded:', contactsData.length);
+                    } else {
+                        eventsData = results.data;
+                        console.log('Events loaded:', eventsData.length);
+                    }
+                    
+                    if (contactsData && eventsData) {
+                        DOM.show('analyze-btn');
+                    }
+                },
+                error: (err) => {
+                     const errorMsg = `Fehler beim Parsen der ${type} CSV: ${err.message}`;
+                     DOM.setStatus(errorMsg, 'error');
+                     statusEl.textContent = `Fehler: ${err.message}`;
+                     statusEl.className = 'text-xs mt-2 text-red-600 dark:text-red-400';
+                 }
+            });
+        }
 
         // ==================== DATA ANALYSIS (CSV) ====================
         function analyzeData() { /* ... (keep existing analyzeData logic) ... */ }
@@ -981,6 +1015,11 @@
 
              appState.filteredCheckins = appState.allCheckins.filter(c => {
                  const checkinDate = c.timestamp;
+                 // Ensure timestamp is a valid date object before proceeding
+                 if (!(checkinDate instanceof Date && !isNaN(checkinDate))) {
+                    console.warn("Invalid date found in checkin data:", c);
+                    return false; 
+                 }
                  const dateString = checkinDate.toISOString().split('T')[0];
 
                  const studioMatch = studio === 'all' || c.studio === studio;
