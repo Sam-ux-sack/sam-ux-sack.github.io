@@ -2348,7 +2348,110 @@
                 console.error('GitHub Load Error:', err);
                 setGitHubStatus(err.message, true);
                 document.getElementById('initial-loading').classList.add('hidden');
-                document.getElementById('initial-load-section').classList.remove('hidden');
+                document.getElementById('initial-load-section').classList.remove('hidden');async function loadFromGitHub() {
+            updateGitHubConfig();
+            setGitHubStatus('Lade Daten...');
+            
+            const { owner, repo, token, dataFile } = GITHUB_CONFIG;
+            if (!owner || !repo || !token) {
+                setGitHubStatus('Fehler: Besitzer, Repo und Token sind erforderlich.', true);
+                return;
+            }
+
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${dataFile}`;
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Fehler: ${response.status} ${response.statusText}`);
+                }
+
+                const fileData = await response.json();
+                let rawJson; // Variable für den rohen JSON-Text
+
+                if (fileData.content) {
+                    // Fall 1: Datei < 1MB, Inhalt ist Base64-codiert
+                    console.log('Lade kleine Datei (Base64)...');
+                    rawJson = decodeURIComponent(escape(atob(fileData.content)));
+                
+                } else if (fileData.type === 'file' && fileData.download_url) {
+                    // Fall 2: Datei > 1MB, Inhalt muss via download_url geladen werden
+                    console.log('Lade große Datei (via download_url)...');
+                    setGitHubStatus('Große Datei wird geladen...');
+                    
+                    const downloadResponse = await fetch(fileData.download_url, {
+                        headers: { 'Authorization': `token ${token}` }
+                    });
+                    
+                    if (!downloadResponse.ok) {
+                        throw new Error(`Fehler beim Herunterladen der Datei: ${downloadResponse.statusText}`);
+                    }
+                    
+                    rawJson = await downloadResponse.text();
+                
+                } else if (Array.isArray(fileData)) {
+                    // Fall 3: Der Pfad ist ein Verzeichnis
+                     throw new Error(`Fehler: Der Pfad '${dataFile}' ist ein Verzeichnis, keine Datei.`);
+                
+                } else {
+                    // Fall 4: Weder Inhalt noch Download-URL gefunden
+f                  throw new Error('Fehler: Datei-Inhalt ist leer oder nicht gefunden.');
+                }
+
+                // Gemeinsame Verarbeitung (nachdem rawJson geladen wurde)
+                const data = JSON.parse(rawJson);
+
+                if (data.allCheckins && data.monthlyTrends) {
+                    allCheckins = data.allCheckins || [];
+                    monthlyTrends = data.monthlyTrends || [];
+                    
+                    // v5.10 Fix: Datums-Objekte wiederherstellen
+                    allCheckins.forEach(c => {
+                        c.timestamp = new Date(c.timestamp);
+                    });
+                    
+                    if (allCheckins.length > 0) {
+                        lastEventDate = new Date(Math.max(...allCheckins.map(c => c.timestamp)));
+                    } else {
+                        lastEventDate = null;
+                    }
+
+                    isLoadedFromGitHub = true;
+                    GITHUB_CONFIG.sha = fileData.sha; // SHA speichern (wichtig für nächstes Speichern)
+                    setGitHubStatus(`Geladen! (${allCheckins.length} Einträge)`);
+                    console.log('Load successful. SHA:', fileData.sha);
+
+                    // Verarbeiten und Rendern
+                    filteredCheckins = [...allCheckins];
+                    processAnalysis();
+                    setupTimeFilters();
+                    setupAllStudioFilters();
+                    setupCompareTab();
+                    
+            _       document.getElementById('initial-load-section').classList.add('hidden');
+                    document.getElementById('initial-loading').classList.add('hidden');
+                    document.getElementById('results-section').classList.remove('hidden');
+                    document.getElementById('time-filter-section').classList.remove('hidden');
+                    document.getElementById('export-btn').classList.remove('hidden');
+                    document.getElementById('sync-github-btn').classList.remove('hidden');
+                    document.getElementById('add-data-btn').classList.remove('hidden');
+                    
+                    setTimeout(() => closeModal('github-sync-modal'), 1000);
+                } else {
+                    setGitHubStatus('Fehler: Geladene Daten haben ein ungültiges Format.', true);
+                }
+                
+            } catch (err) {
+                console.error('GitHub Load Error:', err);
+                setGitHubStatus(err.message, true);
+                document.getElementById('initial-loading').classList.add('hidden');
+                document.getElementById('initial-load-
             }
         }
 
