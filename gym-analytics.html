@@ -2430,9 +2430,9 @@
         
         // v5.7: .trim() hinzugefügt, um Leerzeichen-Fehler zu vermeiden
         function updateGitHubConfig() {
-            githubConfig.owner = document.getElementById('github-owner').value.trim();
-            githubConfig.repo = document.getElementById('github-repo').value.trim();
-            githubConfig.token = document.getElementById('github-token').value.trim();
+            githubConfig.owner = document.getElementById('github-owner').value.trim(); // <-- Trim added
+            githubConfig.repo = document.getElementById('github-repo').value.trim(); // <-- Trim added
+            githubConfig.token = document.getElementById('github-token').value.trim(); // <-- Trim added
             
             localStorage.setItem('githubConfig', JSON.stringify({
                 owner: githubConfig.owner,
@@ -2476,7 +2476,7 @@
             }
 
             const headers = {
-                'Authorization': `token ${token}`,
+                'Authorization': `token ${token}`, // <-- Standard method
                 'Accept': 'application/vnd.github.v3+json',
                 'Content-Type': 'application/json'
             };
@@ -2496,17 +2496,28 @@
                 if (response.status === 200 || response.status === 201) {
                     return { success: true, data: await response.json() };
                 }
-                if (response.status === 204) {
-                    return { success: true, data: {} };
+                if (response.status === 204) { // Handle 204 No Content for successful deletion etc.
+                    return { success: true, data: {} }; 
                 }
-                return { success: true, data: await response.json() };
+                // Fallback for other successful statuses
+                return { success: true, data: await response.json() }; 
 
             } catch (err) {
                 console.error('GitHub API Error:', err);
-                showGitHubError(err.message);
+                // Map common errors to user-friendly messages
+                 if (err.message === 'Bad credentials') {
+                    showGitHubError('Ungültiger Token oder fehlende Berechtigungen.');
+                 } else if (err.message === 'Not Found') {
+                    showGitHubError('Repository oder Datei nicht gefunden. Prüfe Namen und Pfad.');
+                 } else if (err.message && err.message.includes('rate limit exceeded')) {
+                    showGitHubError('Zu viele Anfragen an GitHub. Bitte später erneut versuchen.');
+                 } else {
+                     showGitHubError(err.message || 'Unbekannter GitHub API Fehler.');
+                 }
                 return null;
             }
         }
+
 
         async function loadFromGitHub() {
             setGitHubLoading(true, 'Lade Daten von GitHub...');
@@ -2514,44 +2525,71 @@
             const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?t=${new Date().getTime()}`; // Cache bust
 
             const result = await makeGitHubRequest(url, 'GET');
-            if (result && result.data.type === 'file' && result.data.encoding === 'base64') {
+            
+            // Check if request was successful AND data contains expected properties
+            if (result && result.success && result.data.type === 'file' && result.data.encoding === 'base64') {
                 githubDataSha = result.data.sha;
                 
-                const content = atob(result.data.content);
-                const data = JSON.parse(content);
+                try {
+                    const content = atob(result.data.content);
+                    const data = JSON.parse(content);
+    
+                    allCheckins = (data.allCheckins || []).map(c => ({
+                        ...c,
+                        timestamp: new Date(c.timestamp) // Ensure timestamp is a Date object
+                    }));
+                    lastLoadedTimestamp = data.lastLoadedTimestamp; // Can be null/undefined if not present
+    
+                    // Validate data structure minimally
+                    if (!Array.isArray(allCheckins)) {
+                        throw new Error('Geladene `allCheckins` sind kein Array.');
+                    }
+                    
+                    allCheckins.sort((a, b) => a.timestamp - b.timestamp);
+                    
+                    setGitHubLoading(false);
+                    updateDataStatus(`Geladen von GitHub (${allCheckins.length} Einträge)`);
+                    closeModal('github-modal');
+                    
+                    // Show results section only after successful load
+                    document.getElementById('initial-load-section').classList.add('hidden');
+                    document.getElementById('upload-section').classList.add('hidden');
+                    document.getElementById('results-section').classList.remove('hidden');
+                    document.getElementById('time-filter-section').classList.remove('hidden');
+                    document.getElementById('export-btn').classList.remove('hidden');
+                    document.getElementById('add-data-btn').classList.remove('hidden');
+    
+                    // Trigger analysis and rendering
+                    generateMonthlyTrends();
+                    filteredCheckins = [...allCheckins];
+                    processAnalysis();
+                    setupTimeFilters();
+                    setupTrendsFilters();
+                    renderTrendCharts('all');
+                    analyzeTrendAlerts();
 
-                allCheckins = (data.allCheckins || []).map(c => ({
-                    ...c,
-                    timestamp: new Date(c.timestamp)
-                }));
-                lastLoadedTimestamp = data.lastLoadedTimestamp;
+                } catch (parseError) {
+                    console.error("Error parsing loaded data:", parseError);
+                    showGitHubError(`Fehler beim Verarbeiten der geladenen Daten: ${parseError.message}`);
+                    githubDataSha = null; // Reset SHA as the loaded data was bad
+                    // Keep user in the modal to potentially try again or fix repo data
+                    setGitHubLoading(false); 
+                }
 
-                allCheckins.sort((a, b) => a.timestamp - b.timestamp);
-                
-                setGitHubLoading(false);
-                updateDataStatus(`Geladen von GitHub (${allCheckins.length} Einträge)`);
-                closeModal('github-modal');
-                
-                document.getElementById('initial-load-section').classList.add('hidden');
-                document.getElementById('upload-section').classList.add('hidden');
-                document.getElementById('results-section').classList.remove('hidden');
-                document.getElementById('time-filter-section').classList.remove('hidden');
-                document.getElementById('export-btn').classList.remove('hidden');
-                document.getElementById('add-data-btn').classList.remove('hidden');
-
-                generateMonthlyTrends();
-                filteredCheckins = [...allCheckins];
-                processAnalysis();
-                setupTimeFilters();
-                setupTrendsFilters();
-                renderTrendCharts('all');
-                analyzeTrendAlerts();
-
-            } else {
-                showGitHubError('Datei nicht gefunden oder ungültiges Format. (Pfad: ' + filePath + ')');
-                githubDataSha = null;
+            } else if (result && result.success) {
+                // Successful request but unexpected data format (e.g., directory)
+                 showGitHubError('Unerwartetes Datenformat von GitHub erhalten. Ist der Pfad korrekt?');
+                 githubDataSha = null;
+                 setGitHubLoading(false);
+            } 
+            // 'else' case: makeGitHubRequest already showed the error (e.g., Not Found, Bad credentials)
+              else {
+                 // Ensure loading indicator is hidden if makeGitHubRequest failed silently (shouldn't happen)
+                 setGitHubLoading(false); 
+                 githubDataSha = null; // Reset SHA on load failure
             }
         }
+
 
         async function saveToGitHub() {
             if (allCheckins.length === 0) {
@@ -2564,28 +2602,47 @@
             
             const dataToSave = {
                 lastLoadedTimestamp: lastLoadedTimestamp,
-                allCheckins: allCheckins
+                // Ensure timestamps are ISO strings for JSON compatibility
+                allCheckins: allCheckins.map(c => ({...c, timestamp: c.timestamp.toISOString()})) 
             };
             
-            // UTF-8 fähiges Base64 encoding
-            const content = btoa(unescape(encodeURIComponent(JSON.stringify(dataToSave))));
+            let content;
+            try {
+                // UTF-8 fähiges Base64 encoding
+                content = btoa(unescape(encodeURIComponent(JSON.stringify(dataToSave))));
+            } catch (e) {
+                console.error("Error encoding data:", e);
+                showGitHubError("Fehler beim Vorbereiten der Daten zum Speichern.");
+                setGitHubLoading(false);
+                return;
+            }
+            
             const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
 
             const body = {
                 message: `SAMS GYM Analytics Update - ${new Date().toISOString()}`,
                 content: content,
-                sha: githubDataSha
+                sha: githubDataSha // Send SHA if we loaded the file before to update it
             };
+
+            // If githubDataSha is null, GitHub will create the file.
+            // If it exists and SHA matches, it updates.
+            // If it exists and SHA differs, it fails (conflict) - user needs to reload first.
 
             const result = await makeGitHubRequest(url, 'PUT', body);
             
-            if (result && result.success) {
-                githubDataSha = result.data.content.sha;
+            if (result && result.success && result.data.content) {
+                githubDataSha = result.data.content.sha; // Update SHA after successful save
                 setGitHubLoading(false);
                 updateDataStatus(`Gespeichert! (${allCheckins.length} Einträge)`);
                 closeModal('github-modal');
             } else {
-                // Fehler wird schon im makeGitHubRequest angezeigt
+                 // Error was likely shown by makeGitHubRequest
+                 // Add specific check for conflict (409) if SHA was provided but didn't match
+                 if (githubDataSha && result && !result.success && result.data && result.data.message && result.data.message.includes('does not match')) {
+                    showGitHubError('Konflikt: Die Datei wurde auf GitHub geändert. Bitte lade zuerst die neuesten Daten.');
+                 }
+                 setGitHubLoading(false); // Ensure loading is stopped on failure
             }
         }
 
