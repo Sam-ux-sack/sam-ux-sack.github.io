@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- v5.7: Trim-Fix für GitHub Sync -->
-    <title>SAMS GYM Analytics Dashboard v5.7</title>
+    <!-- v5.8: GitHub Save Success Check Fix -->
+    <title>SAMS GYM Analytics Dashboard v5.8</title>
     
     <meta name="theme-color" content="#DC2626">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -133,8 +133,8 @@
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
                 <div>
                     <h1 class="text-3xl font-bold" style="color: #DC2626;">
-                        <!-- v5.7: Titel -->
-                        🏋️ SAMS GYM Analytics v5.7
+                        <!-- v5.8: Titel -->
+                        🏋️ SAMS GYM Analytics v5.8
                     </h1>
                     <p class="text-sm text-gray-600 mt-1">
                         Analyse-Zeitraum: <span id="period-display" class="font-medium">-</span>
@@ -1671,10 +1671,13 @@
             const filterName = studioFilter === 'all' ? 'Alle Studios' : studioFilter;
 
             const extract = (monthData, studio, extractor) => {
+                if (!monthData) return 0; // Guard against undefined monthData
                 if (studio === 'Alle Studios') {
-                    return Object.values(monthData.studios).reduce((sum, s) => sum + extractor(s), 0);
+                    // Guard against missing studios in monthData
+                    return monthData.studios ? Object.values(monthData.studios).reduce((sum, s) => sum + extractor(s), 0) : 0;
                 }
-                return monthData.studios[studio] ? extractor(monthData.studios[studio]) : 0;
+                 // Guard against missing specific studio or studios object
+                return (monthData.studios && monthData.studios[studio]) ? extractor(monthData.studios[studio]) : 0;
             };
 
             const v1_total = extract(t1, filterName, s => s.total);
@@ -1716,8 +1719,8 @@
             }
 
             AGE_GROUPS.forEach(group => {
-                const v1_male = extract(t1, filterName, s => s.ageGroups[group].male);
-                const v3_male = extract(t3, filterName, s => s.ageGroups[group].male);
+                const v1_male = extract(t1, filterName, s => s.ageGroups[group]?.male ?? 0); // Add guard
+                const v3_male = extract(t3, filterName, s => s.ageGroups[group]?.male ?? 0); // Add guard
                 
                 if (v1_male > 10 && v3_male < v1_male * 0.7) {
                     alertsNegative.push({
@@ -1734,8 +1737,8 @@
                     });
                 }
 
-                const v1_female = extract(t1, filterName, s => s.ageGroups[group].female);
-                const v3_female = extract(t3, filterName, s => s.ageGroups[group].female);
+                const v1_female = extract(t1, filterName, s => s.ageGroups[group]?.female ?? 0); // Add guard
+                const v3_female = extract(t3, filterName, s => s.ageGroups[group]?.female ?? 0); // Add guard
                 
                 if (v1_female > 10 && v3_female < v1_female * 0.7) {
                     alertsNegative.push({
@@ -1783,7 +1786,8 @@
             const filterSelect = document.getElementById('member-studio-filter');
             if (!filterSelect) return; 
             
-            const { studioStats } = analysisResults;
+            // Ensure analysisResults exists before accessing studioStats
+            const { studioStats } = analysisResults || {}; 
             if (!studioStats) return;
 
             const currentVal = filterSelect.value; 
@@ -1796,8 +1800,14 @@
                 filterSelect.appendChild(option);
             });
             
-            filterSelect.value = currentVal; 
+            // Restore previous selection if possible
+            if (Object.keys(studioStats).includes(currentVal) || currentVal === 'all') {
+                filterSelect.value = currentVal;
+            } else {
+                 filterSelect.value = 'all'; // Default to 'all' if previous selection is invalid
+            }
             
+            // Ensure listener is attached only once
             if (!filterSelect.dataset.listener) {
                 filterSelect.addEventListener('change', renderMemberAnalysis);
                 filterSelect.dataset.listener = 'true';
@@ -1807,7 +1817,13 @@
         function renderMemberAnalysis() {
             const studioFilter = document.getElementById('member-studio-filter').value;
             const topList = document.getElementById('top-members-list');
-            topList.innerHTML = '';
+            topList.innerHTML = ''; // Clear previous list
+
+             // Ensure analysisResults exists
+            if (!analysisResults || !analysisResults.checkins) {
+                 topList.innerHTML = '<p class="text-gray-500 text-center py-4 text-sm">Keine Analysedaten verfügbar.</p>';
+                 return;
+            }
 
             const checkins = studioFilter === 'all' 
                 ? analysisResults.checkins 
@@ -1815,7 +1831,10 @@
 
             const memberCounts = {};
             checkins.forEach(c => {
-                memberCounts[c.cusNumber] = (memberCounts[c.cusNumber] || 0) + 1;
+                // Ensure cusNumber is valid before counting
+                if (c.cusNumber) {
+                    memberCounts[c.cusNumber] = (memberCounts[c.cusNumber] || 0) + 1;
+                }
             });
 
             const sortedMembers = Object.entries(memberCounts).sort((a, b) => b[1] - a[1]);
@@ -1838,40 +1857,69 @@
 
         // ==================== RENDER RESULTS ====================
         function renderResults() {
-            const { checkins, studioStats, dailyStats, startDate, endDate } = analysisResults;
+             // Ensure analysisResults exists before proceeding
+            if (!analysisResults) {
+                console.error("renderResults called but analysisResults is null.");
+                // Optionally display an error message to the user
+                return;
+            }
 
-            document.getElementById('period-display').textContent = `${formatDate(startDate)} - ${formatDate(endDate)}`;
-            // Check if endDate is valid before formatting
+            const { checkins, studioStats, dailyStats, startDate, endDate } = analysisResults;
+            
+             // Guard against potentially null or invalid values
+            document.getElementById('period-display').textContent = (startDate && endDate) ? `${formatDate(startDate)} - ${formatDate(endDate)}` : '-';
+            
             if(endDate instanceof Date && !isNaN(endDate)) {
                 document.getElementById('last-event-display').textContent = `${formatDateTime(endDate)}`;
             } else {
-                 document.getElementById('last-event-display').textContent = '-'; // Handle invalid date
+                 document.getElementById('last-event-display').textContent = '-'; 
             }
 
-
-            document.getElementById('stat-total-checkins').textContent = checkins.length.toLocaleString('de-DE');
+            document.getElementById('stat-total-checkins').textContent = (checkins?.length ?? 0).toLocaleString('de-DE');
             
-            const daysCount = Object.keys(dailyStats).length;
-            const avgDaily = (daysCount > 0) ? (checkins.length / daysCount).toFixed(1) : "0.0";
+            const daysCount = dailyStats ? Object.keys(dailyStats).length : 0;
+            const avgDaily = (daysCount > 0 && checkins?.length) ? (checkins.length / daysCount).toFixed(1) : "0.0";
             document.getElementById('stat-avg-daily').textContent = avgDaily.replace('.', ',');
 
-            const topStudio = Object.entries(studioStats).sort((a, b) => b[1] - a[1])[0];
-            if (topStudio) {
+            const topStudio = studioStats ? Object.entries(studioStats).sort((a, b) => b[1] - a[1])[0] : null;
+            if (topStudio && checkins?.length > 0) {
                 document.getElementById('stat-top-studio').textContent = topStudio[0];
                 const percent = ((topStudio[1] / checkins.length) * 100).toFixed(0);
                 document.getElementById('stat-top-studio-percent').textContent = `${percent}% der Check-ins`;
+            } else {
+                 document.getElementById('stat-top-studio').textContent = '-';
+                 document.getElementById('stat-top-studio-percent').textContent = '-';
             }
 
-            renderStudioChart();
-            renderDailyChart();
-            renderDemographicsCharts();
-            renderStudioComparisonTable();
-            renderUtilizationCharts();
-            renderHeatmapTable();
-            setupMemberFilter(); 
-            renderMemberAnalysis(); 
-            renderInsights();
+            // Call rendering functions only if data is likely present
+             if (checkins && checkins.length > 0) {
+                renderStudioChart();
+                renderDailyChart();
+                renderDemographicsCharts();
+                renderStudioComparisonTable();
+                renderUtilizationCharts();
+                renderHeatmapTable();
+                setupMemberFilter(); // Setup filter options based on available studios
+                renderMemberAnalysis(); // Render member data based on current filter
+                renderInsights();
+             } else {
+                 console.warn("No check-in data available to render charts/tables.");
+                 // Optionally clear or hide chart areas
+                 clearChartsAndTables();
+             }
         }
+        
+        // Helper to clear chart canvases and table bodies if needed
+        function clearChartsAndTables() {
+            Object.values(charts).forEach(chart => chart?.destroy());
+            charts = {};
+            document.getElementById('studio-comparison-table').innerHTML = '';
+            document.getElementById('heatmap-table').innerHTML = '';
+            document.getElementById('top-members-list').innerHTML = '<p class="text-gray-500 text-center py-4 text-sm">Keine Daten verfügbar.</p>';
+            document.getElementById('insights-container').innerHTML = '<p class="text-gray-500 text-center py-8">Keine Daten verfügbar.</p>';
+            // Add more clears as needed
+        }
+
 
         // ==================== BASIC CHARTS ====================
         
@@ -1889,17 +1937,23 @@
             font: { weight: 'bold' }
         };
         const getDatalabelConfig = (ctx) => {
+            // Guard against undefined context or data
+             if (!ctx || !ctx.dataset || !ctx.dataset.data || ctx.dataIndex === undefined) return datalabelsOutside;
+
             const value = ctx.dataset.data[ctx.dataIndex];
-            const max = ctx.chart.scales.y.max;
-            // Check if max is valid and greater than 0 to prevent division by zero or NaN
+             // Guard against undefined scales or max value
+            const max = ctx.chart?.scales?.y?.max; 
+            
             if (max && max > 0 && typeof value === 'number') {
                  return (value / max > 0.9) ? datalabelsInside : datalabelsOutside;
             }
-             return datalabelsOutside; // Default if max is invalid or value is not a number
+             return datalabelsOutside; 
         };
 
 
         function renderStudioChart() {
+            // Guard against missing analysisResults
+             if (!analysisResults || !analysisResults.studioStats) return; 
             const { studioStats } = analysisResults;
             const ctx = document.getElementById('chart-studios');
             
@@ -1922,7 +1976,7 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        datalabels: getDatalabelConfig // FIX: Pass function directly
+                        datalabels: getDatalabelConfig 
                     },
                     scales: {
                         y: { 
@@ -1936,6 +1990,8 @@
         }
 
         function renderDailyChart() {
+             // Guard against missing analysisResults
+             if (!analysisResults || !analysisResults.dailyStats) return;
             const { dailyStats } = analysisResults;
             const ctx = document.getElementById('chart-daily');
             
@@ -1948,7 +2004,8 @@
                 data: {
                     labels: sorted.map(d => {
                         const date = new Date(d[0]);
-                        return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                         // Add check for valid date
+                        return !isNaN(date) ? date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) : ''; 
                     }),
                     datasets: [{
                         label: 'Check-ins pro Tag',
@@ -1974,6 +2031,8 @@
         }
 
         function renderDemographicsCharts() {
+             // Guard against missing analysisResults
+             if (!analysisResults || !analysisResults.studioStats) return;
             const { studioStats } = analysisResults;
             const filterSelect = document.getElementById('demo-studio-filter');
             filterSelect.innerHTML = '<option value="all">Alle Studios</option>';
@@ -1986,13 +2045,20 @@
 
             updateDemographicsCharts('all');
 
-            filterSelect.addEventListener('change', (e) => {
-                updateDemographicsCharts(e.target.value);
-            });
+            // Ensure listener is attached only once
+            if (!filterSelect.dataset.listener) {
+                filterSelect.addEventListener('change', (e) => {
+                    updateDemographicsCharts(e.target.value);
+                });
+                filterSelect.dataset.listener = 'true';
+            }
         }
 
         // v5.6: Unbekannt entfernt
         function updateDemographicsCharts(studioFilter) {
+             // Guard against missing analysisResults
+            if (!analysisResults || !analysisResults.checkins) return;
+
             const checkins = studioFilter === 'all' 
                 ? analysisResults.checkins 
                 : analysisResults.checkins.filter(c => c.studio === studioFilter);
@@ -2047,7 +2113,7 @@
             const ageCtx = document.getElementById('chart-age');
             if (charts.age) charts.age.destroy();
             
-            charts.age = new Chart(ageCtx, { // FIX: Use ageCtx here
+            charts.age = new Chart(ageCtx, { 
                 type: 'bar',
                 data: {
                     labels: Object.keys(ageCounts),
@@ -2062,7 +2128,7 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        datalabels: getDatalabelConfig // FIX: Pass function directly
+                        datalabels: getDatalabelConfig 
                     },
                     scales: {
                         y: { 
@@ -2110,7 +2176,7 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { position: 'top' },
-                        datalabels: { // FIX: Use standard config, function might be overkill here
+                        datalabels: { 
                             anchor: 'end',
                             align: 'top',
                             color: '#1F2937',
@@ -2128,6 +2194,8 @@
 
         // v5.6: Unbekannt entfernt / FIX for ReferenceError
         function renderStudioComparisonTable() {
+             // Guard against missing analysisResults
+             if (!analysisResults || !analysisResults.checkins || !analysisResults.studioStats) return;
             const { checkins, studioStats } = analysisResults;
             const tbody = document.getElementById('studio-comparison-table');
             tbody.innerHTML = '';
@@ -2138,7 +2206,6 @@
                 const studioCheckins = checkins.filter(c => c.studio === studio);
                 const males = studioCheckins.filter(c => c.gender === 'Männlich').length;
                 const females = studioCheckins.filter(c => c.gender === 'Weiblich').length;
-                // FIX: 'total' ist jetzt nur die Summe von Männern und Frauen
                 const total = males + females; 
                 
                 const ages = studioCheckins.map(c => c.age).filter(a => a !== null);
@@ -2157,6 +2224,8 @@
         }
 
         function renderUtilizationCharts() {
+             // Guard against missing analysisResults
+             if (!analysisResults || !analysisResults.studioStats) return;
             const { studioStats } = analysisResults;
             const filterSelect = document.getElementById('util-studio-filter');
             filterSelect.innerHTML = '<option value="all">Alle Studios (Gesamt)</option>';
@@ -2169,13 +2238,20 @@
 
             updateUtilizationCharts('all');
 
-            filterSelect.addEventListener('change', (e) => {
-                updateUtilizationCharts(e.target.value);
-                renderHeatmapTable(e.target.value);
-            });
+            // Ensure listener is attached only once
+            if (!filterSelect.dataset.listener) {
+                filterSelect.addEventListener('change', (e) => {
+                    updateUtilizationCharts(e.target.value);
+                    renderHeatmapTable(e.target.value);
+                });
+                 filterSelect.dataset.listener = 'true';
+            }
         }
 
         function updateUtilizationCharts(studioFilter) {
+             // Guard against missing analysisResults
+             if (!analysisResults || !analysisResults.checkins) return;
+
             const checkins = studioFilter === 'all' 
                 ? analysisResults.checkins 
                 : analysisResults.checkins.filter(c => c.studio === studioFilter);
@@ -2191,7 +2267,8 @@
             const uniqueDates = {};
             checkins.forEach(c => {
                 const day = c.day;
-                if (!uniqueDates[day]) uniqueDates[day] = new Set();
+                 // Initialize set if it doesn't exist
+                if (!uniqueDates[day]) uniqueDates[day] = new Set(); 
                 uniqueDates[day].add(c.dateKey);
             });
 
@@ -2202,7 +2279,8 @@
             const dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
             const avgData = [0, 1, 2, 3, 4, 5, 6].map(d => {
                 const total = weekdayTotals[d] || 0;
-                const count = weekdayCounts[d] || 1;
+                 // Ensure count is at least 1 to avoid division by zero
+                const count = weekdayCounts[d] || 1; 
                 return Math.round(total / count);
             });
 
@@ -2224,7 +2302,7 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        datalabels: getDatalabelConfig // FIX: Pass function directly
+                        datalabels: getDatalabelConfig 
                     },
                     scales: {
                         y: { 
@@ -2238,20 +2316,28 @@
         }
 
         function renderHeatmapTable(studioFilter = 'all') {
+             // Guard against missing analysisResults
+             if (!analysisResults || !analysisResults.checkins) return;
+
             const checkins = studioFilter === 'all' 
                 ? analysisResults.checkins 
                 : analysisResults.checkins.filter(c => c.studio === studioFilter);
 
             const hourlyStats = {};
             checkins.forEach(c => {
-                const key = `${c.day}-${c.hour}`;
-                hourlyStats[key] = (hourlyStats[key] || 0) + 1;
+                 // Guard against invalid hour
+                if (c.day !== undefined && c.hour !== undefined) {
+                    const key = `${c.day}-${c.hour}`;
+                    hourlyStats[key] = (hourlyStats[key] || 0) + 1;
+                }
             });
 
             const table = document.getElementById('heatmap-table');
             const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
-            const maxCount = Math.max(...Object.values(hourlyStats), 1);
+            const counts = Object.values(hourlyStats);
+             // Ensure maxCount is at least 1 even if counts is empty
+            const maxCount = counts.length > 0 ? Math.max(...counts) : 1; 
 
             let html = '<thead><tr class="heatmap-header"><th class="heatmap-cell">Uhrzeit</th>';
             dayNames.forEach(day => {
@@ -2265,8 +2351,10 @@
                     const key = `${day}-${hour}`;
                     const count = hourlyStats[key] || 0;
                     const intensity = count > 0 ? (count / maxCount) : 0;
-                    const bgColor = count === 0 ? '#f9fafb' : `rgba(220, 38, 38, ${0.1 + intensity * 0.9})`;
-                    const textColor = intensity > 0.6 ? '#fff' : '#1F2937';
+                     // Ensure intensity calculation is safe
+                    const safeIntensity = Math.min(Math.max(intensity, 0), 1);
+                    const bgColor = count === 0 ? '#f9fafb' : `rgba(220, 38, 38, ${0.1 + safeIntensity * 0.9})`;
+                    const textColor = safeIntensity > 0.6 ? '#fff' : '#1F2937';
                     html += `<td class="heatmap-cell" style="background-color: ${bgColor}; color: ${textColor};">${count > 0 ? count : '-'}</td>`;
                 }
                 html += '</tr>';
@@ -2277,9 +2365,15 @@
         }
 
         function renderInsights() {
-            const { checkins, studioStats } = analysisResults;
+            // Guard against missing analysisResults
+            if (!analysisResults || !analysisResults.checkins || !analysisResults.studioStats || !analysisResults.hourlyStats) {
+                document.getElementById('insights-container').innerHTML = '<p class="text-gray-500 text-center py-8">Nicht genügend Daten für Insights vorhanden.</p>';
+                return;
+            }
+
+            const { checkins, studioStats, hourlyStats } = analysisResults;
             const container = document.getElementById('insights-container');
-            container.innerHTML = '';
+            container.innerHTML = ''; // Clear previous insights
 
             const insights = [];
 
@@ -2311,18 +2405,21 @@
                 });
             }
 
-            const { hourlyStats } = analysisResults;
             const hourTotals = {};
             Object.entries(hourlyStats).forEach(([key, count]) => {
                 const hour = key.split('-')[1];
-                hourTotals[hour] = (hourTotals[hour] || 0) + count;
+                // Ensure hour is a valid key
+                if(hour !== undefined) { 
+                    hourTotals[hour] = (hourTotals[hour] || 0) + count;
+                }
             });
-            const peakHour = Object.entries(hourTotals).sort((a, b) => b[1] - a[1])[0];
-            if (peakHour) {
-                insights.push({
+            const peakHourEntry = Object.entries(hourTotals).sort((a, b) => b[1] - a[1])[0];
+            if (peakHourEntry) {
+                 const peakHour = peakHourEntry[0]; // Get the hour string
+                 insights.push({
                     type: 'success',
                     icon: '⏰',
-                    title: `Peak Hour: ${peakHour[0]}:00 Uhr`,
+                    title: `Peak Hour: ${peakHour}:00 Uhr`,
                     description: `Stärkste Stunde im gesamten Zeitraum`,
                     action: 'Personal-Planung entsprechend anpassen'
                 });
@@ -2334,13 +2431,15 @@
                 if(c.ageGroup) ageGroupCounts[c.ageGroup]++;
             });
             
-            const topAgeGroup = Object.entries(ageGroupCounts).sort((a, b) => b[1] - a[1])[0];
-            if (topAgeGroup && checkins.length > 0) {
+            const topAgeGroupEntry = Object.entries(ageGroupCounts).sort((a, b) => b[1] - a[1])[0];
+            if (topAgeGroupEntry && checkins.length > 0) {
+                 const topAgeGroup = topAgeGroupEntry[0]; // Get the group name
+                 const topAgeGroupCount = topAgeGroupEntry[1]; // Get the count
                  insights.push({
                     type: 'info',
                     icon: '🎂',
-                    title: `Stärkste Altersgruppe: ${topAgeGroup[0]}`,
-                    description: `Diese Gruppe macht ${((topAgeGroup[1]/checkins.length)*100).toFixed(0)}% der Check-ins aus`,
+                    title: `Stärkste Altersgruppe: ${topAgeGroup}`,
+                    description: `Diese Gruppe macht ${((topAgeGroupCount/checkins.length)*100).toFixed(0)}% der Check-ins aus`,
                     action: 'Angebote für diese Zielgruppe prüfen/stärken'
                 });
             }
@@ -2351,31 +2450,35 @@
                 success: 'bg-green-50 border-green-200'
             };
 
-            insights.forEach(insight => {
-                const div = document.createElement('div');
-                div.className = `p-4 rounded-lg border-2 ${typeStyles[insight.type]}`;
-                div.innerHTML = `
-                    <div class="flex items-start">
-                        <div class="text-3xl mr-4">${insight.icon}</div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-lg mb-1">${insight.title}</h4>
-                            <p class="text-sm text-gray-700 mb-2">${insight.description}</p>
-                            <p class="text-xs text-gray-600">📍 <strong>Empfehlung:</strong> ${insight.action}</p>
+            if (insights.length > 0) {
+                insights.forEach(insight => {
+                    const div = document.createElement('div');
+                    div.className = `p-4 rounded-lg border-2 ${typeStyles[insight.type]}`;
+                    div.innerHTML = `
+                        <div class="flex items-start">
+                            <div class="text-3xl mr-4">${insight.icon}</div>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-lg mb-1">${insight.title}</h4>
+                                <p class="text-sm text-gray-700 mb-2">${insight.description}</p>
+                                <p class="text-xs text-gray-600">📍 <strong>Empfehlung:</strong> ${insight.action}</p>
+                            </div>
                         </div>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-
-            if (insights.length === 0) {
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
                 container.innerHTML = '<p class="text-gray-500 text-center py-8">Keine besonderen Auffälligkeiten gefunden. Alle Metriken im normalen Bereich! ✅</p>';
             }
         }
+
 
         // ==================== TAB SWITCHING ====================
         function setupTabs() {
             const tabButtons = document.querySelectorAll('.tab-button');
             tabButtons.forEach(button => {
+                 // Prevent attaching multiple listeners
+                 if (button.dataset.listenerAttached) return; 
+
                 button.addEventListener('click', () => {
                     const targetTab = button.dataset.tab;
                     
@@ -2383,17 +2486,29 @@
                     button.classList.add('active');
                     
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                    document.getElementById(`tab-${targetTab}`).classList.add('active');
+                    const targetContent = document.getElementById(`tab-${targetTab}`);
+                    if (targetContent) {
+                        targetContent.classList.add('active');
+                    } else {
+                         console.error(`Tab content not found for id: tab-${targetTab}`);
+                    }
                 });
+                 button.dataset.listenerAttached = 'true'; // Mark as attached
             });
         }
 
         // ==================== EXPORT & SYNC ====================
         function setupExport() {
             document.getElementById('export-btn').addEventListener('click', () => {
+                 // Ensure data exists before exporting
+                if (!lastLoadedTimestamp && (!allCheckins || allCheckins.length === 0)) {
+                    alert("Keine Daten zum Exportieren vorhanden.");
+                    return;
+                }
                 const data = {
                     lastLoadedTimestamp: lastLoadedTimestamp,
-                    allCheckins: allCheckins
+                    // Ensure timestamps are ISO strings for JSON
+                    allCheckins: allCheckins.map(c => ({...c, timestamp: c.timestamp.toISOString()})) 
                 };
                 const dataStr = JSON.stringify(data, null, 2);
                 const blob = new Blob([dataStr], { type: 'application/json' });
@@ -2401,7 +2516,10 @@
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = `sams-gym-analysis-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a); // Required for Firefox
                 a.click();
+                document.body.removeChild(a); // Clean up
+                URL.revokeObjectURL(url); // Clean up blob URL
             });
 
             document.getElementById('sync-github-btn').addEventListener('click', () => {
@@ -2413,31 +2531,57 @@
 
         // ==================== GITHUB SYNC ====================
         function setupGitHubModal() {
-            const savedConfig = localStorage.getItem('githubConfig');
-            if (savedConfig) {
-                githubConfig = JSON.parse(savedConfig);
-                document.getElementById('github-owner').value = githubConfig.owner;
-                document.getElementById('github-repo').value = githubConfig.repo;
+            try {
+                const savedConfig = localStorage.getItem('githubConfig');
+                if (savedConfig) {
+                    const parsedConfig = JSON.parse(savedConfig);
+                    // Assign properties safely
+                    githubConfig.owner = parsedConfig.owner || 'sam-ux-sack'; 
+                    githubConfig.repo = parsedConfig.repo || 'sams-gym-data';
+                    document.getElementById('github-owner').value = githubConfig.owner;
+                    document.getElementById('github-repo').value = githubConfig.repo;
+                }
+            } catch (e) {
+                console.error("Error loading GitHub config from localStorage:", e);
+                // Use default values if loading fails
+                githubConfig.owner = 'sam-ux-sack';
+                githubConfig.repo = 'sams-gym-data';
             }
-            githubConfig.token = null;
+            githubConfig.token = null; // Always clear token on load
             document.getElementById('github-token').value = '';
 
             updateDataStatus('Nicht geladen');
 
-            document.getElementById('github-load-btn').addEventListener('click', loadFromGitHub);
-            document.getElementById('github-save-btn').addEventListener('click', saveToGitHub);
+             // Ensure listeners are attached only once
+            const loadBtn = document.getElementById('github-load-btn');
+            const saveBtn = document.getElementById('github-save-btn');
+
+            if (!loadBtn.dataset.listener) {
+                loadBtn.addEventListener('click', loadFromGitHub);
+                loadBtn.dataset.listener = 'true';
+            }
+            if (!saveBtn.dataset.listener) {
+                saveBtn.addEventListener('click', saveToGitHub);
+                 saveBtn.dataset.listener = 'true';
+            }
         }
         
         // v5.7: .trim() hinzugefügt, um Leerzeichen-Fehler zu vermeiden
         function updateGitHubConfig() {
-            githubConfig.owner = document.getElementById('github-owner').value.trim(); // <-- Trim added
-            githubConfig.repo = document.getElementById('github-repo').value.trim(); // <-- Trim added
-            githubConfig.token = document.getElementById('github-token').value.trim(); // <-- Trim added
-            
-            localStorage.setItem('githubConfig', JSON.stringify({
-                owner: githubConfig.owner,
-                repo: githubConfig.repo
-            }));
+             try {
+                githubConfig.owner = document.getElementById('github-owner').value.trim(); // <-- Trim added
+                githubConfig.repo = document.getElementById('github-repo').value.trim(); // <-- Trim added
+                githubConfig.token = document.getElementById('github-token').value.trim(); // <-- Trim added
+                
+                // Save only owner and repo, not the token
+                localStorage.setItem('githubConfig', JSON.stringify({
+                    owner: githubConfig.owner,
+                    repo: githubConfig.repo
+                }));
+            } catch (e) {
+                 console.error("Error updating or saving GitHub config:", e);
+                 // Handle potential errors (e.g., localStorage full)
+            }
         }
 
         function setGitHubLoading(isLoading, text = 'Aktion wird ausgeführt...') {
@@ -2445,11 +2589,11 @@
             document.getElementById('github-loading-text').textContent = text;
             document.getElementById('github-load-btn').disabled = isLoading;
             document.getElementById('github-save-btn').disabled = isLoading;
-            document.getElementById('github-error').classList.add('hidden');
+            document.getElementById('github-error').classList.add('hidden'); // Hide error when loading starts
         }
 
         function showGitHubError(message) {
-            setGitHubLoading(false);
+            setGitHubLoading(false); // Ensure loading indicator is off
             const errorEl = document.getElementById('github-error');
             errorEl.textContent = `Fehler: ${message}`;
             errorEl.classList.remove('hidden');
@@ -2458,25 +2602,30 @@
         function updateDataStatus(status) {
             const statusEl = document.getElementById('github-status');
             statusEl.value = status;
-            statusEl.classList.remove('text-green-600', 'text-yellow-600', 'font-bold');
+            // Reset classes before applying new ones
+            statusEl.classList.remove('text-green-600', 'text-yellow-600', 'text-gray-600', 'font-bold');
             
             if (status.startsWith('Geladen')) {
                 statusEl.classList.add('text-green-600', 'font-bold');
             } else if (status.startsWith('Lokal')) {
                 statusEl.classList.add('text-yellow-600', 'font-bold');
+            } else {
+                 statusEl.classList.add('text-gray-600'); // Default style
             }
         }
 
         async function makeGitHubRequest(url, method, body = null) {
-            updateGitHubConfig();
+            updateGitHubConfig(); // Ensures latest values (and trims them)
             const { token } = githubConfig;
+            
+            // Check for token *after* updateGitHubConfig
             if (!token) {
                 showGitHubError('Kein GitHub Token angegeben.');
-                return null;
+                return null; // Return null to indicate failure
             }
 
             const headers = {
-                'Authorization': `token ${token}`, // <-- Standard method
+                'Authorization': `token ${token}`, 
                 'Accept': 'application/vnd.github.v3+json',
                 'Content-Type': 'application/json'
             };
@@ -2485,36 +2634,71 @@
                 const response = await fetch(url, {
                     method: method,
                     headers: headers,
-                    body: body ? JSON.stringify(body) : null
+                    body: body ? JSON.stringify(body) : null,
+                    cache: 'no-cache' // Prevent browser caching API requests
                 });
 
+                // Check for specific error statuses first
+                if (response.status === 401) {
+                    throw new Error('Bad credentials'); // Specific error for token issues
+                }
+                 if (response.status === 404) {
+                    throw new Error('Not Found'); // Specific error for missing repo/file
+                 }
+                 if (response.status === 403) {
+                     const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
+                     if (rateLimitRemaining === '0') {
+                        throw new Error('API rate limit exceeded');
+                     } else {
+                        throw new Error('Forbidden - Prüfe Token-Berechtigungen und SSO.');
+                     }
+                 }
+                  if (response.status === 409) {
+                     throw new Error('Conflict - SHA does not match'); // Specific error for update conflicts
+                  }
+
+                // If not an expected error, check generic !response.ok
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.message || `${response.status} ${response.statusText}`);
+                    // Try to parse error message from GitHub
+                    let errorMsg = `${response.status} ${response.statusText}`;
+                    try {
+                        const errorJson = await response.json();
+                        errorMsg = errorJson.message || errorMsg;
+                    } catch (e) { /* Ignore parsing error */ }
+                    throw new Error(errorMsg);
                 }
                 
-                if (response.status === 200 || response.status === 201) {
-                    return { success: true, data: await response.json() };
-                }
-                if (response.status === 204) { // Handle 204 No Content for successful deletion etc.
+                // Handle successful responses (including 204 No Content)
+                if (response.status === 204) { 
                     return { success: true, data: {} }; 
+                } else {
+                     // Assume JSON for other success codes (200, 201)
+                     try {
+                        const data = await response.json();
+                        return { success: true, data: data };
+                     } catch (e) {
+                         throw new Error("Ungültige JSON-Antwort von GitHub erhalten.");
+                     }
                 }
-                // Fallback for other successful statuses
-                return { success: true, data: await response.json() }; 
 
             } catch (err) {
                 console.error('GitHub API Error:', err);
-                // Map common errors to user-friendly messages
+                 // Map specific errors
                  if (err.message === 'Bad credentials') {
                     showGitHubError('Ungültiger Token oder fehlende Berechtigungen.');
                  } else if (err.message === 'Not Found') {
                     showGitHubError('Repository oder Datei nicht gefunden. Prüfe Namen und Pfad.');
-                 } else if (err.message && err.message.includes('rate limit exceeded')) {
+                 } else if (err.message === 'API rate limit exceeded') {
                     showGitHubError('Zu viele Anfragen an GitHub. Bitte später erneut versuchen.');
-                 } else {
+                 } else if (err.message === 'Conflict - SHA does not match') {
+                     showGitHubError('Konflikt: Datei wurde auf GitHub geändert. Bitte zuerst laden.');
+                 } else if (err.message === 'Forbidden - Prüfe Token-Berechtigungen und SSO.') {
+                     showGitHubError('Zugriff verweigert. Prüfe Token-Berechtigungen (repo scope) und evtl. SSO-Autorisierung.');
+                 }
+                 else {
                      showGitHubError(err.message || 'Unbekannter GitHub API Fehler.');
                  }
-                return null;
+                return null; // Indicate failure
             }
         }
 
@@ -2522,36 +2706,43 @@
         async function loadFromGitHub() {
             setGitHubLoading(true, 'Lade Daten von GitHub...');
             const { owner, repo, filePath } = githubConfig;
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?t=${new Date().getTime()}`; // Cache bust
+             // Add timestamp for cache busting
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?t=${Date.now()}`; 
 
             const result = await makeGitHubRequest(url, 'GET');
             
-            // Check if request was successful AND data contains expected properties
+            githubDataSha = null; // Reset SHA before attempting load
+
             if (result && result.success && result.data.type === 'file' && result.data.encoding === 'base64') {
-                githubDataSha = result.data.sha;
+                githubDataSha = result.data.sha; // Store SHA *after* successful fetch
                 
                 try {
                     const content = atob(result.data.content);
                     const data = JSON.parse(content);
     
+                    // Basic validation of loaded data structure
+                    if (!data || typeof data !== 'object') {
+                        throw new Error('Geladene Daten haben kein gültiges JSON-Format.');
+                    }
+
                     allCheckins = (data.allCheckins || []).map(c => ({
                         ...c,
-                        timestamp: new Date(c.timestamp) // Ensure timestamp is a Date object
-                    }));
-                    lastLoadedTimestamp = data.lastLoadedTimestamp; // Can be null/undefined if not present
-    
-                    // Validate data structure minimally
-                    if (!Array.isArray(allCheckins)) {
-                        throw new Error('Geladene `allCheckins` sind kein Array.');
+                         // Robust date parsing: handle potential invalid strings
+                        timestamp: c.timestamp ? new Date(c.timestamp) : null 
+                    })).filter(c => c.timestamp && !isNaN(c.timestamp)); // Filter out entries with invalid dates
+
+                    lastLoadedTimestamp = data.lastLoadedTimestamp; // Can be null/undefined
+
+                    if (!Array.isArray(allCheckins)) { // Should be redundant due to map/filter, but keep as safety
+                        throw new Error('`allCheckins` in geladenen Daten ist kein Array.');
                     }
                     
-                    allCheckins.sort((a, b) => a.timestamp - b.timestamp);
+                    allCheckins.sort((a, b) => a.timestamp - b.timestamp); // Sort by valid Date objects
                     
                     setGitHubLoading(false);
                     updateDataStatus(`Geladen von GitHub (${allCheckins.length} Einträge)`);
                     closeModal('github-modal');
                     
-                    // Show results section only after successful load
                     document.getElementById('initial-load-section').classList.add('hidden');
                     document.getElementById('upload-section').classList.add('hidden');
                     document.getElementById('results-section').classList.remove('hidden');
@@ -2559,59 +2750,63 @@
                     document.getElementById('export-btn').classList.remove('hidden');
                     document.getElementById('add-data-btn').classList.remove('hidden');
     
-                    // Trigger analysis and rendering
+                    // Run analysis only if data was successfully processed
                     generateMonthlyTrends();
                     filteredCheckins = [...allCheckins];
-                    processAnalysis();
-                    setupTimeFilters();
+                    processAnalysis(); // This calls renderResults internally
+                    // Setup filters *after* data is loaded and processed
+                    setupTimeFilters(); 
                     setupTrendsFilters();
-                    renderTrendCharts('all');
-                    analyzeTrendAlerts();
+                    renderTrendCharts('all'); // Initial render
+                    analyzeTrendAlerts(); // Initial analysis
 
                 } catch (parseError) {
                     console.error("Error parsing loaded data:", parseError);
                     showGitHubError(`Fehler beim Verarbeiten der geladenen Daten: ${parseError.message}`);
-                    githubDataSha = null; // Reset SHA as the loaded data was bad
-                    // Keep user in the modal to potentially try again or fix repo data
+                    githubDataSha = null; 
                     setGitHubLoading(false); 
+                    // Keep user in modal
                 }
 
-            } else if (result && result.success) {
-                // Successful request but unexpected data format (e.g., directory)
-                 showGitHubError('Unerwartetes Datenformat von GitHub erhalten. Ist der Pfad korrekt?');
-                 githubDataSha = null;
-                 setGitHubLoading(false);
-            } 
-            // 'else' case: makeGitHubRequest already showed the error (e.g., Not Found, Bad credentials)
-              else {
-                 // Ensure loading indicator is hidden if makeGitHubRequest failed silently (shouldn't happen)
-                 setGitHubLoading(false); 
-                 githubDataSha = null; // Reset SHA on load failure
+            } else {
+                 // Error was shown by makeGitHubRequest or it wasn't a file
+                 if (result && result.success) { // Handle case where API call succeeded but wasn't a file
+                    showGitHubError('Der angegebene Pfad ist keine Datei.');
+                 }
+                 setGitHubLoading(false); // Ensure loading is stopped
+                 githubDataSha = null; // Reset SHA on any load failure
             }
         }
 
 
         async function saveToGitHub() {
-            if (allCheckins.length === 0) {
+            if (!allCheckins || allCheckins.length === 0) {
                 showGitHubError('Keine Daten zum Speichern vorhanden.');
                 return;
             }
             
             setGitHubLoading(true, 'Speichere Daten auf GitHub...');
-            const { owner, repo, filePath } = githubConfig;
+            const { owner, repo, filePath } = githubConfig; // Use trimmed values
             
             const dataToSave = {
                 lastLoadedTimestamp: lastLoadedTimestamp,
-                // Ensure timestamps are ISO strings for JSON compatibility
+                // Convert Date objects back to ISO strings for saving
                 allCheckins: allCheckins.map(c => ({...c, timestamp: c.timestamp.toISOString()})) 
             };
             
             let content;
             try {
-                // UTF-8 fähiges Base64 encoding
-                content = btoa(unescape(encodeURIComponent(JSON.stringify(dataToSave))));
+                // Use TextEncoder for robust UTF-8 handling before base64
+                const jsonString = JSON.stringify(dataToSave);
+                const uint8Array = new TextEncoder().encode(jsonString);
+                // Convert Uint8Array to binary string for btoa
+                let binaryString = '';
+                uint8Array.forEach((byte) => {
+                    binaryString += String.fromCharCode(byte);
+                });
+                content = btoa(binaryString);
             } catch (e) {
-                console.error("Error encoding data:", e);
+                console.error("Error encoding data for saving:", e);
                 showGitHubError("Fehler beim Vorbereiten der Daten zum Speichern.");
                 setGitHubLoading(false);
                 return;
@@ -2622,26 +2817,23 @@
             const body = {
                 message: `SAMS GYM Analytics Update - ${new Date().toISOString()}`,
                 content: content,
-                sha: githubDataSha // Send SHA if we loaded the file before to update it
+                 // Send the SHA if we have it (for updating the file)
+                sha: githubDataSha 
             };
-
-            // If githubDataSha is null, GitHub will create the file.
-            // If it exists and SHA matches, it updates.
-            // If it exists and SHA differs, it fails (conflict) - user needs to reload first.
 
             const result = await makeGitHubRequest(url, 'PUT', body);
             
-            if (result && result.success && result.data.content) {
-                githubDataSha = result.data.content.sha; // Update SHA after successful save
+            // Check for success based on the API call result
+            if (result && result.success) {
+                 // Update SHA *only* if the response contains content info (usually does on success)
+                if (result.data && result.data.content && result.data.content.sha) {
+                    githubDataSha = result.data.content.sha; 
+                }
                 setGitHubLoading(false);
                 updateDataStatus(`Gespeichert! (${allCheckins.length} Einträge)`);
                 closeModal('github-modal');
             } else {
-                 // Error was likely shown by makeGitHubRequest
-                 // Add specific check for conflict (409) if SHA was provided but didn't match
-                 if (githubDataSha && result && !result.success && result.data && result.data.message && result.data.message.includes('does not match')) {
-                    showGitHubError('Konflikt: Die Datei wurde auf GitHub geändert. Bitte lade zuerst die neuesten Daten.');
-                 }
+                 // Error already shown by makeGitHubRequest
                  setGitHubLoading(false); // Ensure loading is stopped on failure
             }
         }
@@ -2649,10 +2841,17 @@
 
         // ==================== INIT ====================
         document.addEventListener('DOMContentLoaded', () => {
-            setupInitialLoad();
-            setupFileHandlers();
-            setupTabs();
-            setupExport();
+             // Basic error handling for critical elements
+            try {
+                setupInitialLoad();
+                setupFileHandlers();
+                setupTabs();
+                setupExport();
+            } catch (error) {
+                 console.error("Initialization Error:", error);
+                 // Display a user-friendly error message if possible
+                 document.body.innerHTML = `<div style="padding: 20px; text-align: center; color: red;">Initialisierungsfehler. Bitte lade die Seite neu. Details: ${error.message}</div>`;
+            }
         });
     </script>
 </body>
